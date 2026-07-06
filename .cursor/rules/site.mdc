@@ -1,0 +1,55 @@
+---
+description: Amity Immigration Services project conventions
+alwaysApply: true
+---
+
+### Stack
+- Next.js 15+ App Router, TypeScript strict
+- Tailwind CSS 4
+- shadcn/ui (slate base) — never edit components/ui/ files by hand
+- Lucide React — only icon library
+- Framer Motion — always respect prefers-reduced-motion
+- Lenis — smooth scroll, wired via SmoothScrollProvider
+- React Hook Form + Zod — all forms
+- Supabase — database and storage
+- Custom auth — argon2id hashing, signed httpOnly cookie sessions, no external auth provider
+- pnpm
+
+### File Rules
+- One section per file in components/sections/
+- All static copy in content/[page].ts as typed const exports; dynamic copy comes from Supabase via lib/db/queries.ts
+- Sections never fetch their own data; a Server Component parent fetches and passes props
+- Server Components by default; "use client" only for state, effects, or browser APIs
+- All mutations go through Server Actions in actions/[entity].ts
+- Every mutating Server Action checks session, role, and scope BEFORE writing
+- Zod schemas in lib/schemas/[entity].ts, shared client and server
+- DB helpers in lib/db/queries.ts; components never import the Supabase client directly
+- All files live inside the single project root
+
+### Naming
+- Files: kebab-case. Components: PascalCase. Functions/vars: camelCase. Constants: SCREAMING_SNAKE_CASE. Types: PascalCase.
+- DB tables: snake_case plural. Columns: snake_case singular.
+- Env vars: SCREAMING_SNAKE_CASE; client-safe ones prefixed NEXT_PUBLIC_.
+- Routes/slugs: kebab-case.
+
+### Style
+- Mobile-first: unprefixed Tailwind targets 375px; md: and lg: scale up.
+- All colours via CSS variables, never hardcoded hex outside the token definitions.
+- All spacing from the Tailwind scale, no arbitrary values.
+- Max two fonts: Playfair Display (display), Source Sans 3 (body).
+
+### Compliance
+- Amity is a registered migration agent (MARN 964861), not a law firm. Never claim legal advice, legal representation, or lawyer status.
+- Never imply association with "Amity Lawyers" / "Amity Immigration Lawyers" (a separate, unrelated business).
+- Footer renders MARN identity from site_settings.compliance_footer.
+
+### Never
+- Hardcoded secrets or API keys.
+- Secrets in NEXT_PUBLIC_ variables.
+- Plaintext or reversibly-encrypted passwords.
+- Role or scope checks in the UI only; they must run server-side in the Server Action.
+- lorem ipsum, purple-to-blue gradients, default Inter font, mixed icon sets.
+- Outcome guarantees, success percentages, processing-time promises, or comparative claims in any copy.
+- Legal-practice claims or any implied link to Amity Lawyers.
+- Banned words: guarantee, guaranteed, risk-free, fast-track, foolproof, stress-free, hassle-free, dream, plus the global list.
+- Antigravity or Claude Code; Cursor is the only IDE.
