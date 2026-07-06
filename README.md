@@ -2,6 +2,8 @@
 
 Registered migration agent website for Amity Immigration Services, Bundoora VIC.
 
+**Project root:** `C:\Users\simar\Downloads\AIS Project`
+
 ## Stack
 
 Next.js 15 (App Router) · TypeScript strict · Tailwind CSS 4 · shadcn/ui · Supabase · pnpm
