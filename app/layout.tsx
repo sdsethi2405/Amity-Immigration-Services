@@ -3,6 +3,8 @@ import { Playfair_Display, Source_Sans_3 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteChrome } from "@/components/providers/site-chrome";
+import { SiteFooter } from "@/components/shared/site-footer";
+import { SiteHeaderShell } from "@/components/shared/site-header-shell";
 import { getSiteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -76,7 +78,9 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <body className={`${playfair.variable} ${sourceSans.variable}`}>
-        <SiteChrome>{children}</SiteChrome>
+        <SiteChrome header={<SiteHeaderShell />} footer={<SiteFooter />}>
+          {children}
+        </SiteChrome>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

@@ -4,13 +4,18 @@ const SPRING_200_20 = { type: "spring" as const, stiffness: 200, damping: 20 };
 const EASE_OUT_06 = { duration: 0.6, ease: "easeOut" as const };
 const INSTANT = { duration: 0 };
 
+/**
+ * Reveal animations must stay readable in SSR HTML.
+ * Never use opacity: 0 for the initial/hidden state — if hydration or
+ * whileInView fails (e.g. with Lenis), the page would look blank.
+ */
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 24 },
+  hidden: { opacity: 1, y: 16 },
   show: { opacity: 1, y: 0, transition: SPRING_200_20 },
 };
 
 export const fadeIn: Variants = {
-  hidden: { opacity: 0 },
+  hidden: { opacity: 1 },
   show: { opacity: 1, transition: EASE_OUT_06 },
 };
 
@@ -19,18 +24,18 @@ export const staggerChildren: Variants = {
 };
 
 export const scaleIn: Variants = {
-  hidden: { opacity: 0, scale: 0.96 },
+  hidden: { opacity: 1, scale: 0.98 },
   show: { opacity: 1, scale: 1, transition: { duration: 0.5 } },
 };
 
 /** Mega-menu panel open/close — 200ms ease-out. */
 export const menuScaleIn: Variants = {
-  hidden: { opacity: 0, scale: 0.96 },
+  hidden: { opacity: 1, scale: 0.98 },
   show: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: "easeOut" } },
 };
 
 export const slideInFromBottom: Variants = {
-  hidden: { opacity: 0, y: 40 },
+  hidden: { opacity: 1, y: 24 },
   show: { opacity: 1, y: 0, transition: EASE_OUT_06 },
 };
 

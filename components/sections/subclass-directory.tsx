@@ -21,7 +21,7 @@ type SubclassDirectorySectionProps = {
 };
 
 const cardFadeUp = {
-  hidden: { opacity: 0, y: 16 },
+  hidden: { opacity: 1, y: 12 },
   show: {
     opacity: 1,
     y: 0,

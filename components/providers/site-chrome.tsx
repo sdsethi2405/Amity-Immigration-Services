@@ -3,10 +3,18 @@
 import { usePathname } from "next/navigation";
 
 import { SmoothScrollProvider } from "@/components/providers/smooth-scroll";
-import { SiteFooter } from "@/components/shared/site-footer";
-import { SiteHeaderShell } from "@/components/shared/site-header-shell";
 
-export function SiteChrome({ children }: { children: React.ReactNode }) {
+type SiteChromeProps = {
+  children: React.ReactNode;
+  header: React.ReactNode;
+  footer: React.ReactNode;
+};
+
+/**
+ * Client chrome for public pages. Header/footer are passed in from the Server
+ * Component layout so CMS nav data (visa subclasses) stays on the server.
+ */
+export function SiteChrome({ children, header, footer }: SiteChromeProps) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
 
@@ -16,9 +24,9 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <SmoothScrollProvider>
-      <SiteHeaderShell />
+      {header}
       <main>{children}</main>
-      <SiteFooter />
+      {footer}
     </SmoothScrollProvider>
   );
 }
