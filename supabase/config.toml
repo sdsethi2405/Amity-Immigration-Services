@@ -1,0 +1,11 @@
+# Amity Immigration Services — Supabase local config
+# https://supabase.com/docs/guides/local-development/cli/config
+
+project_id = "cwecfcjjmcinztzlhtsl"
+
+[db]
+major_version = 17
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]

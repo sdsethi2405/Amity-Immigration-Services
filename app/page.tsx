@@ -1,28 +1,72 @@
 import type { Metadata } from "next";
-import { JourneyHero } from "@/components/shared/journey-hero";
 
-export const metadata: Metadata = {
-  title: "Home",
-  description:
-    "Registered migration agent in Bundoora, Melbourne. The registered agent you meet is the one who runs your case.",
-};
+import { CtaBandSection } from "@/components/sections/cta-band";
+import { FeaturedServicesSection } from "@/components/sections/featured-services";
+import { HeroSection } from "@/components/sections/hero";
+import { LatestInsightsSection } from "@/components/sections/latest-insights";
+import { StreamsOverviewSection } from "@/components/sections/streams-overview";
+import { WhyAmitySection } from "@/components/sections/why-amity";
+import {
+  parseCtaBandBlock,
+  parseHeroBlock,
+  parseSectionTitleBlock,
+  parseStreamsOverviewBlock,
+  parseWhyAmityBlock,
+} from "@/lib/content/home-blocks";
+import {
+  getLatestPublishedPosts,
+  getPageBySlug,
+  getPublishedServices,
+} from "@/lib/db/queries";
+import { LOCAL_SEO_KEYWORDS } from "@/lib/seo";
 
-export default function HomePage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const homePage = await getPageBySlug("home");
+
+  return {
+    title: homePage?.meta_title ?? "Home",
+    description:
+      homePage?.meta_description ??
+      "Registered migration agent in Bundoora, Melbourne. The registered agent you meet is the one who runs your case.",
+    keywords: [...LOCAL_SEO_KEYWORDS],
+  };
+}
+
+export default async function HomePage() {
+  const [homePage, services, posts] = await Promise.all([
+    getPageBySlug("home"),
+    getPublishedServices(),
+    getLatestPublishedPosts(3),
+  ]);
+
+  const blocks = homePage?.blocks ?? [];
+  const hero = parseHeroBlock(blocks);
+  const streamsOverview = parseStreamsOverviewBlock(blocks);
+  const whyAmity = parseWhyAmityBlock(blocks);
+  const featuredServicesTitle = parseSectionTitleBlock(blocks, "featured-services");
+  const latestInsightsTitle = parseSectionTitleBlock(blocks, "latest-insights");
+  const ctaBand = parseCtaBandBlock(blocks);
+
+  const featuredServices = services.slice(0, 3);
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 md:px-6">
-      {/* TODO(Stage 5): hero section — DB headline/subhead + JourneyHero */}
-      <section className="space-y-8">
-        <div className="max-w-2xl space-y-4">
-          <h1 className="font-heading text-4xl font-semibold tracking-tight md:text-5xl">
-            Amity Immigration Services
-          </h1>
-          <p className="text-lg text-muted-foreground">
-            The registered agent you meet is the one who runs your case.
-          </p>
-        </div>
-        <JourneyHero />
-      </section>
-      {/* TODO(Stage 5): streams-overview, why-amity, featured-services, latest-insights, cta-band */}
-    </div>
+    <>
+      <HeroSection content={hero} />
+
+      {streamsOverview ? (
+        <StreamsOverviewSection content={streamsOverview} />
+      ) : null}
+
+      {whyAmity ? <WhyAmitySection content={whyAmity} /> : null}
+
+      <FeaturedServicesSection
+        services={featuredServices}
+        title={featuredServicesTitle}
+      />
+
+      <LatestInsightsSection posts={posts} title={latestInsightsTitle} />
+
+      {ctaBand ? <CtaBandSection content={ctaBand} /> : null}
+    </>
   );
 }

@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { Playfair_Display, Source_Sans_3 } from "next/font/google";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { SmoothScrollProvider } from "@/components/providers/smooth-scroll";
-import { SiteFooter } from "@/components/shared/site-footer";
-import { SiteHeader } from "@/components/shared/site-header";
+import { SiteChrome } from "@/components/providers/site-chrome";
+import { getSiteUrl } from "@/lib/seo";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -19,7 +18,7 @@ const sourceSans = Source_Sans_3({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://amity-immigration.vercel.app";
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -74,11 +73,7 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <body className={`${playfair.variable} ${sourceSans.variable}`}>
-        <SmoothScrollProvider>
-          <SiteHeader />
-          <main>{children}</main>
-          <SiteFooter />
-        </SmoothScrollProvider>
+        <SiteChrome>{children}</SiteChrome>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{

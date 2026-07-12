@@ -18,9 +18,11 @@ pnpm dev
 
 ## Deploy
 
-- **GitHub:** `amity-immigration` — push to `main` triggers Vercel deploy
-- **Vercel:** import the GitHub repo; set env vars from `.env.example`
-- **Supabase:** project `amity-immigration` in `ap-southeast-2`
+- **GitHub:** [sdsethi2405/AIS-Project](https://github.com/sdsethi2405/AIS-Project) — push to `main` triggers Vercel deploy
+- **Vercel:** [amity-immigration-services](https://vercel.com/cri-projects/amity-immigration-services) (Crimson Industries) — production URL https://ais-project-gamma.vercel.app
+- **Supabase:** project **AIS Project** (`cwecfcjjmcinztzlhtsl`) in `ap-southeast-2`
+
+Set `SUPABASE_SERVICE_ROLE_KEY` (or `SUPABASE_SECRET_KEY`) and `SESSION_SECRET` in Vercel from [Supabase API settings](https://supabase.com/dashboard/project/cwecfcjjmcinztzlhtsl/settings/api-keys).
 
 ## Stages
 

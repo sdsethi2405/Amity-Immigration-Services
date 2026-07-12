@@ -1,15 +1,16 @@
 import type { Metadata } from "next";
 
+import { BlogPostListSection } from "@/components/sections/blog-post-list";
+import { getPublishedPosts } from "@/lib/db/queries";
+
 export const metadata: Metadata = {
   title: "Blog",
-  description: "Insights on Australian visas, migration pathways, and policy updates.",
+  description:
+    "Insights on Australian visas, migration pathways, and policy updates.",
 };
 
-export default function BlogPage() {
-  return (
-    <div className="mx-auto max-w-6xl px-4 py-12 md:px-6">
-      <h1 className="font-heading text-4xl font-semibold">Blog</h1>
-      {/* TODO(Stage 5): published posts index from DB */}
-    </div>
-  );
+export default async function BlogPage() {
+  const posts = await getPublishedPosts();
+
+  return <BlogPostListSection posts={posts} title="Insights" />;
 }

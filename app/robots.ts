@@ -1,13 +1,15 @@
 import type { MetadataRoute } from "next";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://amity-immigration.vercel.app";
+import { getSiteUrl } from "@/lib/seo";
 
 export default function robots(): MetadataRoute.Robots {
+  const siteUrl = getSiteUrl();
+
   return {
     rules: {
       userAgent: "*",
       allow: "/",
+      // CMS surfaces must never be crawled or indexed.
       disallow: "/admin",
     },
     sitemap: `${siteUrl}/sitemap.xml`,

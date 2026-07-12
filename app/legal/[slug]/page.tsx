@@ -1,40 +1,41 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
+import { LegalContentSection } from "@/components/sections/legal-content";
+import { getLegalPages, getPageBySlug } from "@/lib/db/queries";
+
 type LegalPageProps = {
   params: Promise<{ slug: string }>;
 };
 
 export async function generateStaticParams() {
-  // TODO(Stage 3): return legal page slugs from getLegalPages()
-  return [{ slug: "privacy" }, { slug: "terms" }];
+  const pages = await getLegalPages();
+  return pages.map((page) => ({ slug: page.slug }));
 }
 
 export async function generateMetadata({
   params,
 }: LegalPageProps): Promise<Metadata> {
   const { slug } = await params;
-  // TODO(Stage 3): fetch page meta from DB
+  const page = await getPageBySlug(slug);
+
+  if (!page) {
+    return { title: "Page not found" };
+  }
+
   return {
-    title: slug.charAt(0).toUpperCase() + slug.slice(1),
-    description: `${slug} — Amity Immigration Services`,
+    title: page.meta_title ?? page.title,
+    description: page.meta_description ?? undefined,
   };
 }
 
 export default async function LegalPage({ params }: LegalPageProps) {
   const { slug } = await params;
+  const page = await getPageBySlug(slug);
 
-  // TODO(Stage 3): fetch legal content from pages table
-  if (!["privacy", "terms"].includes(slug)) {
+  if (!page || !["privacy", "terms"].includes(slug)) {
     notFound();
   }
 
-  return (
-    <div className="mx-auto max-w-3xl px-4 py-12 md:px-6">
-      <h1 className="font-heading text-4xl font-semibold capitalize">
-        {slug}
-      </h1>
-      {/* TODO(Stage 3): legal-content section — minimal motion */}
-    </div>
-  );
+  return <LegalContentSection page={page} />;
 }

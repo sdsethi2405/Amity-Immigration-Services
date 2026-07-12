@@ -1,16 +1,36 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Contact",
-  description:
-    "Book a consultation with Amity Immigration Services in Bundoora, Melbourne.",
-};
+import { ContactIntroSection } from "@/components/sections/contact-intro";
+import { EnquiryFormSection } from "@/components/sections/enquiry-form";
+import { MapAndDetailsSection } from "@/components/sections/map-and-details";
+import { parseIntroBlock } from "@/lib/content/blocks";
+import { getContactDetails, getPageBySlug } from "@/lib/db/queries";
 
-export default function ContactPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const contactPage = await getPageBySlug("contact");
+
+  return {
+    title: contactPage?.meta_title ?? contactPage?.title ?? "Contact",
+    description:
+      contactPage?.meta_description ??
+      "Book a consultation with Amity Immigration Services in Bundoora, Melbourne.",
+  };
+}
+
+export default async function ContactPage() {
+  const [contactPage, contact] = await Promise.all([
+    getPageBySlug("contact"),
+    getContactDetails(),
+  ]);
+
+  const blocks = contactPage?.blocks ?? [];
+  const intro = parseIntroBlock(blocks, "contact-intro");
+
   return (
-    <div className="mx-auto max-w-6xl px-4 py-12 md:px-6">
-      <h1 className="font-heading text-4xl font-semibold">Contact</h1>
-      {/* TODO(Stage 5): contact-intro, enquiry-form, map-and-details */}
-    </div>
+    <>
+      {intro ? <ContactIntroSection content={intro} /> : null}
+      <EnquiryFormSection />
+      <MapAndDetailsSection contact={contact} />
+    </>
   );
 }

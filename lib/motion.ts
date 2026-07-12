@@ -23,6 +23,12 @@ export const scaleIn: Variants = {
   show: { opacity: 1, scale: 1, transition: { duration: 0.5 } },
 };
 
+/** Mega-menu panel open/close — 200ms ease-out. */
+export const menuScaleIn: Variants = {
+  hidden: { opacity: 0, scale: 0.96 },
+  show: { opacity: 1, scale: 1, transition: { duration: 0.2, ease: "easeOut" } },
+};
+
 export const slideInFromBottom: Variants = {
   hidden: { opacity: 0, y: 40 },
   show: { opacity: 1, y: 0, transition: EASE_OUT_06 },

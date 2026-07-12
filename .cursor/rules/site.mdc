@@ -22,6 +22,8 @@ alwaysApply: true
 - Server Components by default; "use client" only for state, effects, or browser APIs
 - All mutations go through Server Actions in actions/[entity].ts
 - Every mutating Server Action checks session, role, and scope BEFORE writing
+- **Dual access control (hierarchy + scope):** every admin mutation must call `getCurrentAdmin()` (or `requireAdmin()` from `lib/auth/access.ts`) first. Then enforce **role level** (higher `roles.level` = more authority) against the action's required minimum — Contributors (20) cannot delete; Editors (50) cannot manage admins, roles, teams, or `site_settings`; only Head Admin (100, `scope = global`) manages those global resources. Separately enforce **team scope** via `getAccessibleScopes(adminId)` / `requireTeamScope()` for team-scoped tables (`pages`, `services`, `visa_subclasses`, `posts`, `team_members`): global roles receive all team IDs; team roles may only mutate rows whose `team_id` is in their scope. Both checks run server-side before any write — never rely on hiding UI.
+- All admin mutations must validate CSRF via `assertValidCsrf()` from `lib/auth/csrf.ts`
 - Zod schemas in lib/schemas/[entity].ts, shared client and server
 - DB helpers in lib/db/queries.ts; components never import the Supabase client directly
 - All files live inside the single project root
@@ -53,3 +55,8 @@ alwaysApply: true
 - Legal-practice claims or any implied link to Amity Lawyers.
 - Banned words: guarantee, guaranteed, risk-free, fast-track, foolproof, stress-free, hassle-free, dream, plus the global list.
 - Antigravity or Claude Code; Cursor is the only IDE.
+
+### Supabase
+- When creating or modifying Supabase migrations (`supabase/migrations/`), seed data, or schema instructions, **apply them automatically** — do not leave migration application as a manual step for the user.
+- Prefer local `supabase db push` / `supabase migration up` when the CLI is linked; otherwise use the Supabase MCP `apply_migration` tool against project `cwecfcjjmcinztzlhtsl`.
+- After applying, verify with a read query or `list_migrations` when practical.

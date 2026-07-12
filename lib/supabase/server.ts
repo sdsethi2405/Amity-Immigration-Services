@@ -1,12 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
 
+import {
+  getSupabaseServiceRoleKey,
+  getSupabaseUrl,
+} from "@/lib/supabase/env";
+
 /**
  * Server Supabase client using the service role for privileged reads/writes.
- * TODO(Stage 3): add cookie/session helpers and typed Database interface.
  */
 export function createServerSupabaseClient() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const url = getSupabaseUrl();
+  const serviceRoleKey = getSupabaseServiceRoleKey();
 
   if (!url || !serviceRoleKey) {
     throw new Error(

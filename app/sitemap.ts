@@ -1,33 +1,50 @@
 import type { MetadataRoute } from "next";
-import { getLegalPages, getPublishedPosts } from "@/lib/db/queries";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ?? "https://amity-immigration.vercel.app";
+import {
+  getLegalPages,
+  getPublishedPosts,
+  getPublishedVisaSubclasses,
+} from "@/lib/db/queries";
+import { getSiteUrl } from "@/lib/seo";
 
-const staticRoutes: MetadataRoute.Sitemap = [
-  { url: `${siteUrl}/`, changeFrequency: "weekly", priority: 1 },
-  { url: `${siteUrl}/about`, changeFrequency: "monthly", priority: 0.8 },
-  { url: `${siteUrl}/services`, changeFrequency: "monthly", priority: 0.9 },
-  {
-    url: `${siteUrl}/services/visa-sub-classes`,
-    changeFrequency: "weekly",
-    priority: 0.9,
-  },
-  {
-    url: `${siteUrl}/services/points-calculator`,
-    changeFrequency: "monthly",
-    priority: 0.8,
-  },
-  { url: `${siteUrl}/resources`, changeFrequency: "monthly", priority: 0.7 },
-  { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.8 },
-  { url: `${siteUrl}/contact`, changeFrequency: "monthly", priority: 0.9 },
-];
-
+/**
+ * Public sitemap only. Never enumerate /admin — the CMS is noindex and
+ * disallowed in robots.txt.
+ */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [posts, legalPages] = await Promise.all([
+  const siteUrl = getSiteUrl();
+
+  const staticRoutes: MetadataRoute.Sitemap = [
+    { url: `${siteUrl}/`, changeFrequency: "weekly", priority: 1 },
+    { url: `${siteUrl}/about`, changeFrequency: "monthly", priority: 0.8 },
+    { url: `${siteUrl}/services`, changeFrequency: "monthly", priority: 0.9 },
+    {
+      url: `${siteUrl}/services/visa-sub-classes`,
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    {
+      url: `${siteUrl}/services/points-calculator`,
+      changeFrequency: "monthly",
+      priority: 0.8,
+    },
+    { url: `${siteUrl}/resources`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${siteUrl}/blog`, changeFrequency: "weekly", priority: 0.8 },
+    { url: `${siteUrl}/contact`, changeFrequency: "monthly", priority: 0.9 },
+  ];
+
+  const [posts, legalPages, subclasses] = await Promise.all([
     getPublishedPosts(),
     getLegalPages(),
+    getPublishedVisaSubclasses(),
   ]);
+
+  const subclassRoutes: MetadataRoute.Sitemap = subclasses.map((subclass) => ({
+    url: `${siteUrl}/services/visa-sub-classes/${subclass.slug}`,
+    lastModified: subclass.updated_at,
+    changeFrequency: "monthly",
+    priority: 0.7,
+  }));
 
   const postRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${siteUrl}/blog/${post.slug}`,
@@ -42,5 +59,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.3,
   }));
 
-  return [...staticRoutes, ...postRoutes, ...legalRoutes];
+  return [...staticRoutes, ...subclassRoutes, ...postRoutes, ...legalRoutes];
 }
