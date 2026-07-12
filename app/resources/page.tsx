@@ -4,9 +4,9 @@ import { PointsCalculatorCalloutSection } from "@/components/sections/points-cal
 import { ResourceLinksSection } from "@/components/sections/resource-links";
 import { ResourcesIntroSection } from "@/components/sections/resources-intro";
 import {
+  parseAllResourceLinksBlocks,
   parseCalloutBlock,
   parseIntroBlock,
-  parseResourceLinksBlock,
 } from "@/lib/content/blocks";
 import { getPageBySlug } from "@/lib/db/queries";
 
@@ -25,13 +25,18 @@ export default async function ResourcesPage() {
   const resourcesPage = await getPageBySlug("resources");
   const blocks = resourcesPage?.blocks ?? [];
   const intro = parseIntroBlock(blocks, "resources-intro");
-  const resourceLinks = parseResourceLinksBlock(blocks);
+  const resourceLinkSections = parseAllResourceLinksBlocks(blocks);
   const pointsCallout = parseCalloutBlock(blocks, "points-calculator-callout");
 
   return (
     <>
       {intro ? <ResourcesIntroSection content={intro} /> : null}
-      {resourceLinks ? <ResourceLinksSection content={resourceLinks} /> : null}
+      {resourceLinkSections.map((section) => (
+        <ResourceLinksSection
+          key={section.title || section.links[0]?.href || "resources"}
+          content={section}
+        />
+      ))}
       {pointsCallout ? (
         <PointsCalculatorCalloutSection content={pointsCallout} />
       ) : null}

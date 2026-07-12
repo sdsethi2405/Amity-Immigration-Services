@@ -101,12 +101,9 @@ export function parseCredentialsBlock(blocks: ContentBlock[]): CredentialsBlock 
   return { type: "credentials", title, items };
 }
 
-export function parseResourceLinksBlock(
-  blocks: ContentBlock[],
+function parseOneResourceLinksBlock(
+  block: Record<string, unknown>,
 ): ResourceLinksBlock | null {
-  const block = getBlock(blocks, "resource-links");
-  if (!block) return null;
-
   const links = Array.isArray(block.links)
     ? block.links.filter(isRecord).flatMap((entry) => {
         const label = asString(entry.label);
@@ -128,6 +125,27 @@ export function parseResourceLinksBlock(
   if (!title && links.length === 0) return null;
 
   return { type: "resource-links", title, links };
+}
+
+export function parseResourceLinksBlock(
+  blocks: ContentBlock[],
+): ResourceLinksBlock | null {
+  const block = getBlock(blocks, "resource-links");
+  if (!block) return null;
+  return parseOneResourceLinksBlock(block);
+}
+
+/** All resource-links sections on a page (official + on-site, etc.). */
+export function parseAllResourceLinksBlocks(
+  blocks: ContentBlock[],
+): ResourceLinksBlock[] {
+  return blocks.flatMap((block) => {
+    if (!isRecord(block) || asString(block.type) !== "resource-links") {
+      return [];
+    }
+    const parsed = parseOneResourceLinksBlock(block);
+    return parsed ? [parsed] : [];
+  });
 }
 
 export function parseSectionTitle(

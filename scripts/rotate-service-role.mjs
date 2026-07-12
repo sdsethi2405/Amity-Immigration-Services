@@ -38,7 +38,7 @@ const createRes = await fetch(
     headers,
     body: JSON.stringify({
       type: "secret",
-      name: `rotated-${new Date().toISOString().slice(0, 10)}`,
+      name: `rotated_${new Date().toISOString().slice(0, 10).replaceAll("-", "")}`,
       description: "Rotated after chat exposure of legacy service_role JWT",
     }),
   },

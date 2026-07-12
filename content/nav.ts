@@ -63,7 +63,7 @@ export function buildPrimaryNav(
       stream: group.stream,
       label: group.label,
       links: group.subclasses.map((subclass) => ({
-        label: `Subclass ${subclass.subclassNumber} — ${subclass.name}`,
+        label: `${subclass.subclassNumber} — ${subclass.name}`,
         href: `/services/visa-sub-classes/${subclass.slug}`,
       })),
     }));

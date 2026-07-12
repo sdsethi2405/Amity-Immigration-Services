@@ -21,5 +21,13 @@ export function createPublicSupabaseClient() {
       persistSession: false,
       autoRefreshToken: false,
     },
+    // CMS content changes outside the Next build; refresh public reads on ISR.
+    global: {
+      fetch: (input, init) =>
+        fetch(input, {
+          ...init,
+          next: { revalidate: 60 },
+        }),
+    },
   });
 }

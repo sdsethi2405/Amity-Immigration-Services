@@ -20,6 +20,9 @@ const sourceSans = Source_Sans_3({
 
 const siteUrl = getSiteUrl();
 
+/** Public pages read CMS content from Supabase; refresh periodically. */
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {

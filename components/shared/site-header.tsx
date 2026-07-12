@@ -18,6 +18,8 @@ type SiteHeaderProps = {
   primaryNav: NavItem[];
 };
 
+type MegaNavItem = Extract<NavItem, { type: "mega" }>;
+
 function trapFocus(container: HTMLElement, event: KeyboardEvent) {
   const focusable = Array.from(
     container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
@@ -42,11 +44,9 @@ function trapFocus(container: HTMLElement, event: KeyboardEvent) {
 
 function MegaMenuPanel({
   item,
-  isOpen,
   onClose,
 }: {
-  item: Extract<NavItem, { type: "mega" }>;
-  isOpen: boolean;
+  item: MegaNavItem;
   onClose: () => void;
 }) {
   const panelId = useId();
@@ -55,7 +55,7 @@ function MegaMenuPanel({
   const variants = withReducedMotion(menuScaleIn, prefersReducedMotion);
 
   useEffect(() => {
-    if (!isOpen || !panelRef.current) return;
+    if (!panelRef.current) return;
 
     const panel = panelRef.current;
 
@@ -76,11 +76,7 @@ function MegaMenuPanel({
     firstLink?.focus();
 
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) {
-    return null;
-  }
+  }, [onClose]);
 
   return (
     <motion.div
@@ -88,52 +84,40 @@ function MegaMenuPanel({
       id={panelId}
       role="region"
       aria-label={`${item.label} menu`}
-      className="absolute left-0 top-full z-50 w-full border border-border bg-background p-6 shadow-lg md:grid md:grid-cols-4 md:gap-6"
+      className="absolute inset-x-0 top-full z-50 border-b border-border bg-background shadow-lg"
       initial="hidden"
       animate="show"
       exit="hidden"
       variants={variants}
     >
-      <div className="mb-6 border-b border-border pb-6 md:col-span-4 md:mb-0 md:border-b-0 md:pb-0">
-        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          Quick links
-        </p>
-        <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-4">
-          {item.utilityLinks.map((link) => (
-            <li key={link.href}>
+      <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 lg:px-8">
+        <div className="border-b border-border pb-5">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Quick links
+          </p>
+          <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
+            <li>
               <Link
-                href={link.href}
+                href={item.href}
                 className="inline-flex flex-col rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 onClick={onClose}
               >
-                <span className="font-medium">{link.label}</span>
-                {link.description ? (
-                  <span className="text-xs text-muted-foreground">
-                    {link.description}
-                  </span>
-                ) : null}
+                <span className="font-medium">All services</span>
+                <span className="text-xs text-muted-foreground">
+                  Overview of how we can help
+                </span>
               </Link>
             </li>
-          ))}
-        </ul>
-      </div>
-
-      {item.groups.map((group) => (
-        <div key={group.stream}>
-          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {group.label}
-          </p>
-          <ul className="space-y-2">
-            {group.links.map((link) => (
+            {item.utilityLinks.map((link) => (
               <li key={link.href}>
                 <Link
                   href={link.href}
-                  className="block rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="inline-flex flex-col rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={onClose}
                 >
                   <span className="font-medium">{link.label}</span>
                   {link.description ? (
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
+                    <span className="text-xs text-muted-foreground">
                       {link.description}
                     </span>
                   ) : null}
@@ -142,7 +126,43 @@ function MegaMenuPanel({
             ))}
           </ul>
         </div>
-      ))}
+
+        {item.groups.length > 0 ? (
+          <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {item.groups.map((group) => (
+              <div key={group.stream}>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {group.label}
+                </p>
+                <ul className="space-y-1">
+                  {group.links.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="block rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={onClose}
+                      >
+                        <span className="font-medium leading-snug">
+                          {link.label}
+                        </span>
+                        {link.description ? (
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {link.description}
+                          </span>
+                        ) : null}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-6 text-sm text-muted-foreground">
+            Visa sub-class pages will appear here once published.
+          </p>
+        )}
+      </div>
     </motion.div>
   );
 }
@@ -154,6 +174,12 @@ export function SiteHeader({ primaryNav }: SiteHeaderProps) {
   const headerRef = useRef<HTMLElement>(null);
 
   const closeDesktopMega = useCallback(() => setDesktopMega(null), []);
+
+  const desktopMegaItem =
+    primaryNav.find(
+      (item): item is MegaNavItem =>
+        item.type === "mega" && item.label === desktopMega,
+    ) ?? null;
 
   useEffect(() => {
     if (!mobileOpen) return;
@@ -184,7 +210,7 @@ export function SiteHeader({ primaryNav }: SiteHeaderProps) {
   return (
     <header
       ref={headerRef}
-      className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur"
+      className="relative sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur"
     >
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 md:px-6">
         <Link
@@ -205,44 +231,33 @@ export function SiteHeader({ primaryNav }: SiteHeaderProps) {
                 {item.label}
               </Link>
             ) : (
-              <div key={item.label} className="relative">
-                <div className="inline-flex items-center gap-1">
-                  <Link
-                    href={item.href}
-                    className="text-sm font-medium text-foreground hover:text-primary"
-                  >
-                    {item.label}
-                  </Link>
-                  <button
-                    type="button"
-                    className="inline-flex rounded-md p-0.5 text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    aria-haspopup="true"
-                    aria-expanded={desktopMega === item.label}
-                    aria-label={`${item.label} sub-menu`}
-                    onClick={() =>
-                      setDesktopMega((current) =>
-                        current === item.label ? null : item.label,
-                      )
-                    }
-                  >
-                    <ChevronDown
-                      className={cn(
-                        "size-4 transition-transform",
-                        desktopMega === item.label && "rotate-180",
-                      )}
-                      aria-hidden
-                    />
-                  </button>
-                </div>
-                <AnimatePresence>
-                  {desktopMega === item.label ? (
-                    <MegaMenuPanel
-                      item={item}
-                      isOpen
-                      onClose={closeDesktopMega}
-                    />
-                  ) : null}
-                </AnimatePresence>
+              <div key={item.label} className="inline-flex items-center gap-1">
+                <Link
+                  href={item.href}
+                  className="text-sm font-medium text-foreground hover:text-primary"
+                >
+                  {item.label}
+                </Link>
+                <button
+                  type="button"
+                  className="inline-flex rounded-md p-0.5 text-foreground hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-haspopup="true"
+                  aria-expanded={desktopMega === item.label}
+                  aria-label={`${item.label} sub-menu`}
+                  onClick={() =>
+                    setDesktopMega((current) =>
+                      current === item.label ? null : item.label,
+                    )
+                  }
+                >
+                  <ChevronDown
+                    className={cn(
+                      "size-4 transition-transform",
+                      desktopMega === item.label && "rotate-180",
+                    )}
+                    aria-hidden
+                  />
+                </button>
               </div>
             ),
           )}
@@ -267,6 +282,12 @@ export function SiteHeader({ primaryNav }: SiteHeaderProps) {
           </button>
         </div>
       </div>
+
+      <AnimatePresence>
+        {desktopMegaItem ? (
+          <MegaMenuPanel item={desktopMegaItem} onClose={closeDesktopMega} />
+        ) : null}
+      </AnimatePresence>
 
       {mobileOpen ? (
         <div
@@ -314,6 +335,15 @@ export function SiteHeader({ primaryNav }: SiteHeaderProps) {
                           Quick links
                         </p>
                         <ul className="space-y-1">
+                          <li>
+                            <Link
+                              href={item.href}
+                              className="block py-1 text-sm"
+                              onClick={() => setMobileOpen(false)}
+                            >
+                              All services
+                            </Link>
+                          </li>
                           {item.utilityLinks.map((link) => (
                             <li key={link.href}>
                               <Link
