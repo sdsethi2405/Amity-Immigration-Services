@@ -54,7 +54,7 @@ export function FeaturedServicesSection({
           {services.map((service) => (
             <motion.li key={service.id} variants={itemVariants}>
               <Link
-                href="/services"
+                href={`/services/${service.slug}`}
                 className="group flex h-full flex-col rounded-lg border border-border bg-card p-6 transition-colors hover:border-ring"
               >
                 <h3 className="font-heading text-xl font-semibold text-foreground group-hover:text-primary">

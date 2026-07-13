@@ -96,18 +96,6 @@ function MegaMenuPanel({
             Quick links
           </p>
           <ul className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-x-6 sm:gap-y-2">
-            <li>
-              <Link
-                href={item.href}
-                className="inline-flex flex-col rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                onClick={onClose}
-              >
-                <span className="font-medium">All services</span>
-                <span className="text-xs text-muted-foreground">
-                  Overview of how we can help
-                </span>
-              </Link>
-            </li>
             {item.utilityLinks.map((link) => (
               <li key={link.href}>
                 <Link
@@ -335,15 +323,6 @@ export function SiteHeader({ primaryNav }: SiteHeaderProps) {
                           Quick links
                         </p>
                         <ul className="space-y-1">
-                          <li>
-                            <Link
-                              href={item.href}
-                              className="block py-1 text-sm"
-                              onClick={() => setMobileOpen(false)}
-                            >
-                              All services
-                            </Link>
-                          </li>
                           {item.utilityLinks.map((link) => (
                             <li key={link.href}>
                               <Link

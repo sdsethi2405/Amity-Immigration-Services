@@ -40,6 +40,11 @@ export const staticNavLinks: Array<
 
 const MEGA_UTILITY_LINKS: NavLink[] = [
   {
+    label: "All services",
+    href: "/services",
+    description: "Overview of how we can help",
+  },
+  {
     label: "Visa sub-class directory",
     href: "/services/visa-sub-classes",
     description: "Browse all published visa sub-classes",

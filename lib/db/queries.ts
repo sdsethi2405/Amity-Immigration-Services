@@ -584,7 +584,7 @@ export type SearchResult = {
 function hrefForSearchResult(type: SearchResultType, slug: string): string {
   switch (type) {
     case "service":
-      return "/services";
+      return `/services/${slug}`;
     case "visa_subclass":
       return `/services/visa-sub-classes/${slug}`;
     case "post":

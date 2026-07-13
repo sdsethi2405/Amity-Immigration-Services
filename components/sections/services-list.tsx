@@ -52,7 +52,7 @@ export function ServicesListSection({
           {services.map((service) => (
             <motion.li key={service.id} variants={itemVariants}>
               <Link
-                href="/contact"
+                href={`/services/${service.slug}`}
                 className="group flex flex-col gap-2 px-5 py-6 transition-colors hover:bg-secondary md:flex-row md:items-center md:justify-between md:px-6"
               >
                 <div>
@@ -66,7 +66,7 @@ export function ServicesListSection({
                   ) : null}
                 </div>
                 <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
-                  Enquire
+                  Learn more
                   <ArrowRight className="size-4" />
                 </span>
               </Link>
