@@ -42,7 +42,7 @@ export default async function AdminAuditLogPage({ searchParams }: PageProps) {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/login");
 
-  if (admin.role.level < ROLE_LEVEL.EDITOR) {
+  if (admin.role.level < ROLE_LEVEL.ADMIN) {
     redirect("/admin");
   }
 

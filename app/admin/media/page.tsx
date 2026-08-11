@@ -18,7 +18,7 @@ export default async function AdminMediaPage() {
   if (!admin) redirect("/admin/login");
 
   const csrfToken = await getCsrfTokenForForms();
-  const canDelete = admin.role.level >= ROLE_LEVEL.EDITOR;
+  const canDelete = admin.role.level >= ROLE_LEVEL.ADMIN;
 
   const initialLists = {} as Partial<Record<MediaBucket, MediaObject[]>>;
   await Promise.all(

@@ -26,7 +26,7 @@ export default async function AdminPostsListPage() {
     adminListPostsForAdmin(admin.id),
     getCsrfTokenForForms(),
   ]);
-  const canDelete = admin.role.level >= ROLE_LEVEL.EDITOR;
+  const canDelete = admin.role.level >= ROLE_LEVEL.ADMIN;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">

@@ -59,7 +59,7 @@ export default async function AdminEditTeamMemberPage({ params }: PageProps) {
         member={member}
         csrfToken={csrfToken}
         teams={teamsToOptions(teams)}
-        canPublish={admin.role.level >= ROLE_LEVEL.EDITOR}
+        canPublish={admin.role.level >= ROLE_LEVEL.ADMIN}
         defaultTeamId={member.team_id}
       />
     </div>

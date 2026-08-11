@@ -32,7 +32,7 @@ export function PublishToggle({
       </div>
       {!canPublish ? (
         <p className="text-xs text-muted-foreground">
-          Editors and above can publish. Your draft will stay unpublished.
+          Admins and above can publish. Your draft will stay unpublished.
         </p>
       ) : null}
     </div>

@@ -74,7 +74,7 @@ export default async function AdminEnquiryDetailPage({ params }: PageProps) {
     await markEnquiryReadAction({ id: enquiry.id });
   }
 
-  const canDelete = admin.role.level >= ROLE_LEVEL.EDITOR;
+  const canDelete = admin.role.level >= ROLE_LEVEL.ADMIN;
   const templates = parseEnquiryTemplates(templatesRaw);
 
   return (

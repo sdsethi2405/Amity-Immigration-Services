@@ -84,9 +84,12 @@ export function AdminsManagement({
   return (
     <div className="space-y-8">
       <section className="space-y-4 rounded-xl border border-border p-4">
-        <h2 className="font-heading text-xl font-semibold">Invite admin</h2>
+        <h2 className="font-heading text-xl font-semibold">
+          Create staff account
+        </h2>
         <p className="text-sm text-muted-foreground">
-          Create a new admin account. Password must be at least 12 characters.
+          Create a Head Admin, Admin, or Staff login. Password must be at least
+          12 characters. Only Head Admin can manage these accounts.
         </p>
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="space-y-2">
@@ -149,12 +152,12 @@ export function AdminsManagement({
           ) : null}
         </div>
         <Button type="button" disabled={isPending} onClick={handleCreate}>
-          {isPending ? "Creating…" : "Create admin"}
+          {isPending ? "Creating…" : "Create account"}
         </Button>
       </section>
 
       <section className="space-y-4 rounded-xl border border-border p-4">
-        <h2 className="font-heading text-xl font-semibold">Admin accounts</h2>
+        <h2 className="font-heading text-xl font-semibold">Staff accounts</h2>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[36rem] text-left text-sm">
             <thead>

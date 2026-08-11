@@ -34,12 +34,12 @@ export function requireRoleLevel(admin: CurrentAdmin, minLevel: number): void {
   }
 }
 
-/** Contributors (level 20) cannot delete; Editors+ required. */
+/** Staff (level 20) cannot delete; Admin+ required. */
 export function requireCanDelete(admin: CurrentAdmin): void {
   requireRoleLevel(admin, DELETE_MIN_LEVEL);
 }
 
-/** Contributors cannot publish or unpublish; Editors+ required. */
+/** Staff cannot publish or unpublish; Admin+ required. */
 export function requireCanPublish(admin: CurrentAdmin): void {
   requireRoleLevel(admin, PUBLISH_MIN_LEVEL);
 }

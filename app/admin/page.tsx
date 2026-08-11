@@ -9,6 +9,7 @@ import {
   Inbox,
   Newspaper,
   Plane,
+  UserCog,
   Users,
 } from "lucide-react";
 
@@ -70,7 +71,8 @@ export default async function AdminDashboardPage() {
     redirect("/admin/login");
   }
 
-  const showAudit = admin.role.level >= ROLE_LEVEL.EDITOR;
+  const showAudit = admin.role.level >= ROLE_LEVEL.ADMIN;
+  const showUsers = admin.role.level >= ROLE_LEVEL.ADMIN;
   const enquiryCounts = await adminCountEnquiriesByStatus();
   const newEnquiries = enquiryCounts.new;
 
@@ -110,6 +112,25 @@ export default async function AdminDashboardPage() {
             </div>
           </div>
         </Link>
+
+        {showUsers ? (
+          <Link
+            href="/admin/users"
+            className="rounded-xl border border-border bg-background p-4 transition-colors hover:border-primary/40 hover:bg-muted/30 sm:col-span-2"
+          >
+            <div className="flex items-start gap-3">
+              <span className="rounded-lg bg-muted p-2 text-foreground">
+                <UserCog className="size-5" aria-hidden />
+              </span>
+              <div>
+                <h2 className="font-heading text-lg font-semibold">Users</h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Manage staff accounts and client portal logins.
+                </p>
+              </div>
+            </div>
+          </Link>
+        ) : null}
 
         {SECTIONS.map((section) => {
           const Icon = section.icon;

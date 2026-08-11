@@ -16,8 +16,8 @@ insert into public.teams (id, name, slug) values
 
 insert into public.roles (id, name, level, scope) values
   ('b1000000-0000-4000-8000-000000000001', 'Head Admin', 100, 'global'),
-  ('b1000000-0000-4000-8000-000000000002', 'Editor', 50, 'team'),
-  ('b1000000-0000-4000-8000-000000000003', 'Contributor', 20, 'team');
+  ('b1000000-0000-4000-8000-000000000002', 'Admin', 50, 'team'),
+  ('b1000000-0000-4000-8000-000000000003', 'Staff', 20, 'team');
 
 -- ---------------------------------------------------------------------------
 -- Site settings

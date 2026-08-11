@@ -59,7 +59,7 @@ export default async function AdminEditVisaSubclassPage({ params }: PageProps) {
         visa={visa}
         csrfToken={csrfToken}
         teams={teamsToOptions(teams)}
-        canPublish={admin.role.level >= ROLE_LEVEL.EDITOR}
+        canPublish={admin.role.level >= ROLE_LEVEL.ADMIN}
         defaultTeamId={visa.team_id}
       />
     </div>

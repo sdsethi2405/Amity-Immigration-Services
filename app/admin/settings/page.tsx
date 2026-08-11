@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { AdminsManagement } from "@/components/admin/admins-management";
 import { ChangePasswordForm } from "@/components/admin/change-password-form";
 import {
   SiteSettingsForm,
@@ -10,11 +10,6 @@ import {
 import { getCsrfTokenForForms } from "@/lib/admin/csrf";
 import { ROLE_LEVEL } from "@/lib/auth/constants";
 import { getCurrentAdmin } from "@/lib/auth/session";
-import {
-  adminListAdmins,
-  adminListRoles,
-  adminListTeams,
-} from "@/lib/db/admin-queries";
 import {
   getComplianceFooter,
   getContactDetails,
@@ -86,9 +81,6 @@ export default async function AdminSettingsPage() {
   let whatsappE164 = "";
   let feeEstimateBands: Awaited<ReturnType<typeof getFeeEstimateBands>> = [];
   let googleReviewsEmbedUrl = "";
-  let adminsList: Awaited<ReturnType<typeof adminListAdmins>> = [];
-  let rolesList: Awaited<ReturnType<typeof adminListRoles>> = [];
-  let teamsList: Awaited<ReturnType<typeof adminListTeams>> = [];
 
   if (canManageSite) {
     const [
@@ -102,9 +94,6 @@ export default async function AdminSettingsPage() {
       whatsapp,
       feeBands,
       reviewsUrl,
-      admins,
-      roles,
-      teams,
     ] = await Promise.all([
       getContactDetails(),
       getSocialLinks(),
@@ -116,9 +105,6 @@ export default async function AdminSettingsPage() {
       getWhatsappE164(),
       getFeeEstimateBands(),
       getGoogleReviewsEmbedUrl(),
-      adminListAdmins(),
-      adminListRoles(),
-      adminListTeams(),
     ]);
 
     contact = contactDetails;
@@ -139,9 +125,6 @@ export default async function AdminSettingsPage() {
     whatsappE164 = whatsapp ?? "";
     feeEstimateBands = feeBands;
     googleReviewsEmbedUrl = reviewsUrl ?? "";
-    adminsList = admins;
-    rolesList = roles;
-    teamsList = teams;
   }
 
   return (
@@ -166,6 +149,20 @@ export default async function AdminSettingsPage() {
 
       {canManageSite ? (
         <>
+          <section className="space-y-3 rounded-xl border border-border p-4">
+            <h2 className="font-heading text-xl font-semibold">Users</h2>
+            <p className="text-sm text-muted-foreground">
+              Create and deactivate Head Admin, Admin, Staff, and client portal
+              accounts.
+            </p>
+            <Link
+              href="/admin/users"
+              className="inline-flex text-sm font-medium text-primary hover:underline"
+            >
+              Manage users →
+            </Link>
+          </section>
+
           <SiteSettingsForm
             csrfToken={csrfToken}
             contact={contact}
@@ -179,13 +176,6 @@ export default async function AdminSettingsPage() {
             whatsappE164={whatsappE164}
             feeEstimateBands={feeEstimateBands}
             googleReviewsEmbedUrl={googleReviewsEmbedUrl}
-          />
-          <AdminsManagement
-            csrfToken={csrfToken}
-            currentAdminId={admin.id}
-            admins={adminsList}
-            roles={rolesList}
-            teams={teamsList}
           />
         </>
       ) : null}

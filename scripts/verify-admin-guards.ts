@@ -37,15 +37,15 @@ function expectAuthError(label: string, fn: () => void) {
   }
 }
 
-const contributor = mockAdmin(ROLE_LEVEL.CONTRIBUTOR);
-const editor = mockAdmin(ROLE_LEVEL.EDITOR);
+const staff = mockAdmin(ROLE_LEVEL.STAFF);
+const admin = mockAdmin(ROLE_LEVEL.ADMIN);
 
-expectAuthError("Contributor cannot delete", () => requireCanDelete(contributor));
-expectAuthError("Contributor cannot publish", () => requireCanPublish(contributor));
-expectAuthError("Contributor fails EDITOR level", () =>
-  requireRoleLevel(contributor, ROLE_LEVEL.EDITOR),
+expectAuthError("Staff cannot delete", () => requireCanDelete(staff));
+expectAuthError("Staff cannot publish", () => requireCanPublish(staff));
+expectAuthError("Staff fails ADMIN level", () =>
+  requireRoleLevel(staff, ROLE_LEVEL.ADMIN),
 );
 
-requireCanDelete(editor);
-requireCanPublish(editor);
-console.log("PASS: Editor can delete and publish");
+requireCanDelete(admin);
+requireCanPublish(admin);
+console.log("PASS: Admin can delete and publish");

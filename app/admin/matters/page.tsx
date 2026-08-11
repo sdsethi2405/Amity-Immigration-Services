@@ -22,7 +22,7 @@ export default async function AdminMattersPage() {
   const admin = await getCurrentAdmin();
   if (!admin) redirect("/admin/login");
 
-  const canManage = admin.role.level >= ROLE_LEVEL.EDITOR;
+  const canManage = admin.role.level >= ROLE_LEVEL.ADMIN;
   const csrfToken = await getCsrfTokenForForms();
 
   const [matters, clients, visas] = await Promise.all([
@@ -58,7 +58,7 @@ export default async function AdminMattersPage() {
         </section>
       ) : (
         <p className="text-sm text-muted-foreground">
-          Editors and above can create matters.
+          Admins and above can create matters.
         </p>
       )}
 

@@ -16,6 +16,7 @@ import {
   Newspaper,
   Plane,
   Settings,
+  UserCog,
   Users,
   Briefcase,
 } from "lucide-react";
@@ -29,6 +30,7 @@ import { Button } from "@/components/ui/button";
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/enquiries", label: "Enquiries", icon: Inbox },
+  { href: "/admin/users", label: "Users", icon: UserCog },
   { href: "/admin/matters", label: "Matters", icon: FolderKanban },
   { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/pages", label: "Pages", icon: FileText },
@@ -62,7 +64,8 @@ export function AdminNav({
 }: AdminNavProps) {
   const pathname = usePathname();
   const [isPending, startTransition] = useTransition();
-  const showAudit = roleLevel >= ROLE_LEVEL.EDITOR;
+  const showAudit = roleLevel >= ROLE_LEVEL.ADMIN;
+  const showUsers = roleLevel >= ROLE_LEVEL.ADMIN;
 
   function handleLogout() {
     startTransition(async () => {
@@ -86,6 +89,10 @@ export function AdminNav({
 
       <nav className="flex flex-1 flex-row gap-1 overflow-x-auto px-2 py-3 md:flex-col md:overflow-x-visible">
         {NAV_ITEMS.map((item) => {
+          if (item.href === "/admin/users" && !showUsers) {
+            return null;
+          }
+
           const Icon = item.icon;
           const active =
             "exact" in item && item.exact

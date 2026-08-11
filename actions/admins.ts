@@ -21,6 +21,7 @@ import {
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
 function revalidateAdmins() {
+  revalidatePath("/admin/users");
   revalidatePath("/admin/settings");
 }
 
@@ -46,13 +47,17 @@ export async function createAdminAction(
 
     const { data: role, error: roleError } = await supabase
       .from("roles")
-      .select("id, scope")
+      .select("id, scope, level")
       .eq("id", parsed.data.roleId)
       .maybeSingle();
 
     if (roleError) throw roleError;
     if (!role) {
       return actionFail("Role not found");
+    }
+
+    if (role.level > actor.role.level) {
+      return actionFail("You cannot assign a role higher than your own");
     }
 
     if (role.scope === "team" && !teamId) {

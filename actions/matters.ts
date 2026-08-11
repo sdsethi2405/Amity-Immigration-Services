@@ -62,7 +62,7 @@ function revalidateMatters(id?: string) {
 }
 
 /**
- * Create a matter (and optionally a new client). Editors+ required.
+ * Create a matter (and optionally a new client). Admin+ required.
  * Seeds checklist items from the visa subclass document_checklist when linked.
  */
 export async function createMatterAction(
@@ -76,7 +76,7 @@ export async function createMatterAction(
 
     await requireCsrf(parsed.data.csrfToken);
     const admin = await requireAdmin();
-    requireRoleLevel(admin, ROLE_LEVEL.EDITOR);
+    requireRoleLevel(admin, ROLE_LEVEL.ADMIN);
 
     const supabase = createServerSupabaseClient();
     let clientId = emptyToNull(parsed.data.existing_client_id);
@@ -202,7 +202,7 @@ export async function updateMatterStatusAction(
 
     await requireCsrf(parsed.data.csrfToken);
     const admin = await requireAdmin();
-    requireRoleLevel(admin, ROLE_LEVEL.EDITOR);
+    requireRoleLevel(admin, ROLE_LEVEL.ADMIN);
 
     const supabase = createServerSupabaseClient();
     const { data: existing, error: fetchError } = await supabase
