@@ -5,14 +5,13 @@ type MapAndDetailsSectionProps = {
 };
 
 const DEFAULT_ADDRESS = "59 Settlement Road, Bundoora VIC 3083";
-const MAP_EMBED_SRC =
-  "https://maps.google.com/maps?q=59%20Settlement%20Road%20Bundoora%20VIC%203083&output=embed";
 
 export function MapAndDetailsSection({ contact }: MapAndDetailsSectionProps) {
   const address = contact?.address ?? DEFAULT_ADDRESS;
   const phone = contact?.phone;
   const email = contact?.email;
   const officeHours = contact?.office_hours;
+  const mapEmbedSrc = `https://maps.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
 
   if (!address && !phone && !email && !officeHours) {
     return null;
@@ -54,7 +53,7 @@ export function MapAndDetailsSection({ contact }: MapAndDetailsSectionProps) {
         <div className="overflow-hidden rounded-lg border border-border">
           <iframe
             title="Amity Immigration Services office location"
-            src={MAP_EMBED_SRC}
+            src={mapEmbedSrc}
             className="aspect-square w-full md:aspect-video"
             loading="lazy"
             referrerPolicy="no-referrer-when-downgrade"

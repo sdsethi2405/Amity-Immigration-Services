@@ -11,13 +11,15 @@ import {
   parseSectionTitle,
 } from "@/lib/content/blocks";
 import { getPageBySlug, getPublishedServices } from "@/lib/db/queries";
-import { LOCAL_SEO_KEYWORDS } from "@/lib/seo";
+import { formatPageTitle, LOCAL_SEO_KEYWORDS } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const servicesPage = await getPageBySlug("services");
 
   return {
-    title: servicesPage?.meta_title ?? servicesPage?.title ?? "Services",
+    title: formatPageTitle(
+      servicesPage?.meta_title ?? servicesPage?.title ?? "Services",
+    ),
     description:
       servicesPage?.meta_description ??
       "Migration services for skilled, partner, family, and business visa matters across Melbourne and Victoria.",

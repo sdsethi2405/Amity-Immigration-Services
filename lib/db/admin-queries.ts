@@ -304,7 +304,9 @@ export type Enquiry = {
   message: string;
   status: "new" | "in_progress" | "closed";
   source_page: string | null;
+  notes: string | null;
   created_at: string;
+  updated_at: string | null;
 };
 
 export type EnquiryListFilters = {
@@ -321,7 +323,9 @@ function mapEnquiry(row: {
   message: string;
   status: string;
   source_page: string | null;
+  notes?: string | null;
   created_at: string;
+  updated_at?: string | null;
 }): Enquiry {
   const status =
     row.status === "in_progress" || row.status === "closed"
@@ -337,7 +341,9 @@ function mapEnquiry(row: {
     message: row.message,
     status,
     source_page: row.source_page,
+    notes: row.notes ?? null,
     created_at: row.created_at,
+    updated_at: row.updated_at ?? null,
   };
 }
 
@@ -351,7 +357,7 @@ export async function adminListEnquiries(
   let query = supabase
     .from("enquiries")
     .select(
-      "id, name, email, phone, visa_interest, message, status, source_page, created_at",
+      "id, name, email, phone, visa_interest, message, status, source_page, notes, created_at, updated_at",
     )
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -372,7 +378,7 @@ export async function adminGetEnquiryById(
   const { data, error } = await supabase
     .from("enquiries")
     .select(
-      "id, name, email, phone, visa_interest, message, status, source_page, created_at",
+      "id, name, email, phone, visa_interest, message, status, source_page, notes, created_at, updated_at",
     )
     .eq("id", id)
     .maybeSingle();

@@ -139,3 +139,91 @@ export const NOMINATION_OPTIONS: { value: NominationOption; label: string }[] = 
 
 export const POINTS_DISCLAIMER =
   "This calculator gives an indicative estimate only. Points criteria are set by the Department of Home Affairs and change over time. Verify your score with the official points calculator and seek professional advice before relying on any result.";
+
+export function getDefaultPointsTableJson(): string {
+  return JSON.stringify(POINTS_TABLE, null, 2);
+}
+
+export type PointsTable = {
+  age: Record<AgeBracket, number>;
+  english: Record<EnglishLevel, number>;
+  overseasEmployment: Record<OverseasEmployment, number>;
+  australianEmployment: Record<AustralianEmployment, number>;
+  employmentCap: number;
+  education: Record<EducationLevel, number>;
+  australianStudy: number;
+  specialistEducation: number;
+  communityLanguage: number;
+  professionalYear: number;
+  regionalStudy: number;
+  partner: Record<PartnerOption, number>;
+  nomination: Record<NominationOption, number>;
+  eoiMinimum: number;
+};
+
+function isNumberRecord(
+  value: unknown,
+  keys: readonly string[],
+): value is Record<string, number> {
+  if (!value || typeof value !== "object") return false;
+  const record = value as Record<string, unknown>;
+  return keys.every((key) => typeof record[key] === "number");
+}
+
+/** Validate CMS JSON against the POINTS_TABLE shape; return null if invalid. */
+export function parsePointsTable(value: unknown): PointsTable | null {
+  if (!value || typeof value !== "object") return null;
+
+  const candidate = value as Record<string, unknown>;
+
+  if (
+    !isNumberRecord(candidate.age, Object.keys(POINTS_TABLE.age)) ||
+    !isNumberRecord(candidate.english, Object.keys(POINTS_TABLE.english)) ||
+    !isNumberRecord(
+      candidate.overseasEmployment,
+      Object.keys(POINTS_TABLE.overseasEmployment),
+    ) ||
+    !isNumberRecord(
+      candidate.australianEmployment,
+      Object.keys(POINTS_TABLE.australianEmployment),
+    ) ||
+    !isNumberRecord(candidate.education, Object.keys(POINTS_TABLE.education)) ||
+    !isNumberRecord(candidate.partner, Object.keys(POINTS_TABLE.partner)) ||
+    !isNumberRecord(candidate.nomination, Object.keys(POINTS_TABLE.nomination)) ||
+    typeof candidate.employmentCap !== "number" ||
+    typeof candidate.australianStudy !== "number" ||
+    typeof candidate.specialistEducation !== "number" ||
+    typeof candidate.communityLanguage !== "number" ||
+    typeof candidate.professionalYear !== "number" ||
+    typeof candidate.regionalStudy !== "number" ||
+    typeof candidate.eoiMinimum !== "number"
+  ) {
+    return null;
+  }
+
+  return {
+    age: candidate.age as PointsTable["age"],
+    english: candidate.english as PointsTable["english"],
+    overseasEmployment:
+      candidate.overseasEmployment as PointsTable["overseasEmployment"],
+    australianEmployment:
+      candidate.australianEmployment as PointsTable["australianEmployment"],
+    employmentCap: candidate.employmentCap,
+    education: candidate.education as PointsTable["education"],
+    australianStudy: candidate.australianStudy,
+    specialistEducation: candidate.specialistEducation,
+    communityLanguage: candidate.communityLanguage,
+    professionalYear: candidate.professionalYear,
+    regionalStudy: candidate.regionalStudy,
+    partner: candidate.partner as PointsTable["partner"],
+    nomination: candidate.nomination as PointsTable["nomination"],
+    eoiMinimum: candidate.eoiMinimum,
+  };
+}
+
+/** Load CMS points_table from site_settings, falling back to POINTS_TABLE. */
+export async function getResolvedPointsTable(): Promise<PointsTable> {
+  const { getSiteSetting } = await import("@/lib/db/queries");
+  const value = await getSiteSetting("points_table");
+  return parsePointsTable(value) ?? POINTS_TABLE;
+}

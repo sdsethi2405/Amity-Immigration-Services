@@ -35,6 +35,7 @@ export function EnquiryFormSection() {
       visa_interest: "",
       message: "",
       source_page: "/contact",
+      website: "",
     },
   });
 
@@ -134,6 +135,15 @@ export function EnquiryFormSection() {
                   </p>
                 ) : null}
               </div>
+
+              <input
+                type="text"
+                tabIndex={-1}
+                autoComplete="off"
+                aria-hidden
+                className="sr-only"
+                {...register("website")}
+              />
 
               {serverError ? (
                 <motion.p

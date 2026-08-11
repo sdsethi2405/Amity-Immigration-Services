@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 
 import { deleteEnquiryAction } from "@/actions/enquiries";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
+import { EnquiryNotesForm } from "@/components/admin/enquiry-notes-form";
 import { EnquiryStatusForm } from "@/components/admin/enquiry-status-form";
 import { buttonVariants } from "@/components/ui/button";
 import { getCsrfTokenForForms } from "@/lib/admin/csrf";
@@ -127,6 +128,14 @@ export default async function AdminEnquiryDetailPage({ params }: PageProps) {
           </dd>
         </div>
       </dl>
+
+      <div className="rounded-xl border border-border p-4">
+        <EnquiryNotesForm
+          id={enquiry.id}
+          notes={enquiry.notes}
+          csrfToken={csrfToken}
+        />
+      </div>
 
       <div>
         <Link

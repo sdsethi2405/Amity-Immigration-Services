@@ -104,3 +104,32 @@ export async function checkSearchRateLimit(
 
   return { allowed: true };
 }
+
+/** 5 public enquiry submissions per IP per 10 minutes. */
+export const enquiryIpLimiter =
+  redis &&
+  new Ratelimit({
+    redis,
+    limiter: Ratelimit.slidingWindow(5, "10 m"),
+    prefix: "amity:enquiry:ip",
+    analytics: false,
+  });
+
+export async function checkEnquiryRateLimit(
+  ip: string,
+): Promise<{ allowed: boolean; retryAfterSeconds?: number }> {
+  if (!enquiryIpLimiter) {
+    return { allowed: true };
+  }
+
+  const result = await enquiryIpLimiter.limit(ip || "unknown");
+
+  if (!result.success) {
+    return {
+      allowed: false,
+      retryAfterSeconds: Math.ceil((result.reset - Date.now()) / 1000),
+    };
+  }
+
+  return { allowed: true };
+}

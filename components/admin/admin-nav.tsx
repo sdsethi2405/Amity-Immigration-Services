@@ -12,6 +12,7 @@ import {
   LogOut,
   Newspaper,
   Plane,
+  Settings,
   Users,
   Briefcase,
 } from "lucide-react";
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { href: "/admin/posts", label: "Posts", icon: Newspaper },
   { href: "/admin/team-members", label: "Team", icon: Users },
   { href: "/admin/media", label: "Media", icon: ImageIcon },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;
 
 type AdminNavProps = {

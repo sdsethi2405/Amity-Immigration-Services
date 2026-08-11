@@ -280,6 +280,224 @@ const SIMPLE_KEYS = [
   "html",
 ] as const;
 
+const ARRAY_KEYS = [
+  "links",
+  "items",
+  "points",
+  "streams",
+  "credentials",
+] as const;
+
+type ArrayFieldKey = (typeof ARRAY_KEYS)[number];
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function detectArrayShape(
+  entries: unknown[],
+): "label-href" | "title-body" | "title-description" | "string" | "unknown" {
+  if (entries.length === 0) return "string";
+
+  const first = entries[0];
+  if (typeof first === "string") return "string";
+  if (!isRecord(first)) return "unknown";
+
+  if ("href" in first) return "label-href";
+  if ("description" in first || ("label" in first && !("body" in first))) {
+    return "title-description";
+  }
+  if ("title" in first || "body" in first) return "title-body";
+  return "unknown";
+}
+
+function emptyArrayItem(
+  shape: ReturnType<typeof detectArrayShape>,
+): unknown {
+  switch (shape) {
+    case "label-href":
+      return { label: "", href: "" };
+    case "title-description":
+      return { title: "", description: "" };
+    case "title-body":
+      return { title: "", body: "" };
+    case "string":
+      return "";
+    default:
+      return {};
+  }
+}
+
+function TemplateArrayField({
+  fieldKey,
+  value,
+  onPatch,
+}: {
+  fieldKey: ArrayFieldKey;
+  value: unknown[];
+  onPatch: (partial: Record<string, unknown>) => void;
+}) {
+  const shape = detectArrayShape(value);
+
+  if (shape === "unknown") {
+    return null;
+  }
+
+  function updateItem(index: number, next: unknown) {
+    const copy = [...value];
+    copy[index] = next;
+    onPatch({ [fieldKey]: copy });
+  }
+
+  function removeItem(index: number) {
+    onPatch({ [fieldKey]: value.filter((_, i) => i !== index) });
+  }
+
+  function addItem() {
+    onPatch({ [fieldKey]: [...value, emptyArrayItem(shape)] });
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <Label className="capitalize">{fieldKey}</Label>
+        <Button type="button" variant="outline" size="sm" onClick={addItem}>
+          <Plus className="size-3.5" aria-hidden />
+          Add
+        </Button>
+      </div>
+
+      {value.length === 0 ? (
+        <p className="text-xs text-muted-foreground">No items yet.</p>
+      ) : null}
+
+      <div className="space-y-3">
+        {value.map((entry, index) => (
+          <div
+            key={`${fieldKey}-${index}`}
+            className="space-y-2 rounded-md border border-border p-3"
+          >
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon-sm"
+                aria-label={`Remove ${fieldKey} item`}
+                onClick={() => removeItem(index)}
+              >
+                <Trash2 className="size-4 text-destructive" />
+              </Button>
+            </div>
+
+            {shape === "string" ? (
+              <Input
+                value={typeof entry === "string" ? entry : ""}
+                onChange={(event) => updateItem(index, event.target.value)}
+              />
+            ) : null}
+
+            {shape === "label-href" && isRecord(entry) ? (
+              <div className="grid gap-2 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label>Label</Label>
+                  <Input
+                    value={typeof entry.label === "string" ? entry.label : ""}
+                    onChange={(event) =>
+                      updateItem(index, { ...entry, label: event.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Href</Label>
+                  <Input
+                    value={typeof entry.href === "string" ? entry.href : ""}
+                    onChange={(event) =>
+                      updateItem(index, { ...entry, href: event.target.value })
+                    }
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {shape === "title-body" && isRecord(entry) ? (
+              <div className="grid gap-2">
+                <div className="space-y-1">
+                  <Label>Title</Label>
+                  <Input
+                    value={typeof entry.title === "string" ? entry.title : ""}
+                    onChange={(event) =>
+                      updateItem(index, { ...entry, title: event.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Body</Label>
+                  <Textarea
+                    rows={3}
+                    value={typeof entry.body === "string" ? entry.body : ""}
+                    onChange={(event) =>
+                      updateItem(index, { ...entry, body: event.target.value })
+                    }
+                  />
+                </div>
+              </div>
+            ) : null}
+
+            {shape === "title-description" && isRecord(entry) ? (
+              <div className="grid gap-2">
+                <div className="space-y-1">
+                  <Label>
+                    {"label" in entry && !("title" in entry) ? "Label" : "Title"}
+                  </Label>
+                  <Input
+                    value={
+                      typeof entry.title === "string"
+                        ? entry.title
+                        : typeof entry.label === "string"
+                          ? entry.label
+                          : ""
+                    }
+                    onChange={(event) => {
+                      if ("title" in entry) {
+                        updateItem(index, {
+                          ...entry,
+                          title: event.target.value,
+                        });
+                        return;
+                      }
+                      updateItem(index, {
+                        ...entry,
+                        label: event.target.value,
+                      });
+                    }}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label>Description</Label>
+                  <Textarea
+                    rows={3}
+                    value={
+                      typeof entry.description === "string"
+                        ? entry.description
+                        : ""
+                    }
+                    onChange={(event) =>
+                      updateItem(index, {
+                        ...entry,
+                        description: event.target.value,
+                      })
+                    }
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function TemplateBlockFields({
   block,
   onPatch,
@@ -288,6 +506,8 @@ function TemplateBlockFields({
   onPatch: (partial: Record<string, unknown>) => void;
 }) {
   const simpleKeys = SIMPLE_KEYS.filter((key) => key in block);
+  const arrayKeys = ARRAY_KEYS.filter((key) => Array.isArray(block[key]));
+  const hasStructuredFields = simpleKeys.length > 0 || arrayKeys.length > 0;
   const [jsonError, setJsonError] = useState<string | null>(null);
   const [jsonValue, setJsonValue] = useState(() =>
     JSON.stringify(block, null, 2),
@@ -298,14 +518,17 @@ function TemplateBlockFields({
     setJsonError(null);
   }, [block]);
 
-  if (simpleKeys.length > 0) {
+  if (hasStructuredFields) {
     return (
       <div className="grid gap-3">
         {simpleKeys.map((key) => {
           const value = block[key];
           const isLong =
             typeof value === "string" &&
-            (value.length > 120 || value.includes("\n") || key === "html" || key === "body");
+            (value.length > 120 ||
+              value.includes("\n") ||
+              key === "html" ||
+              key === "body");
 
           return (
             <div key={key} className="space-y-2">
@@ -325,6 +548,15 @@ function TemplateBlockFields({
             </div>
           );
         })}
+
+        {arrayKeys.map((key) => (
+          <TemplateArrayField
+            key={key}
+            fieldKey={key}
+            value={block[key] as unknown[]}
+            onPatch={onPatch}
+          />
+        ))}
       </div>
     );
   }

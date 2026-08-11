@@ -17,6 +17,8 @@ import {
   OVERSEAS_EMPLOYMENT_OPTIONS,
   PARTNER_OPTIONS,
   POINTS_DISCLAIMER,
+  POINTS_TABLE,
+  type PointsTable,
 } from "@/lib/points-table";
 import {
   POINTS_CALCULATOR_DEFAULTS,
@@ -178,7 +180,11 @@ function Disclaimer() {
   );
 }
 
-export function PointsCalculatorSection() {
+export function PointsCalculatorSection({
+  pointsTable = POINTS_TABLE,
+}: {
+  pointsTable?: PointsTable;
+}) {
   const [openPanels, setOpenPanels] = useState({
     personal: true,
     employment: true,
@@ -199,7 +205,7 @@ export function PointsCalculatorSection() {
   });
 
   const values = useWatch({ control }) as PointsCalculatorFormValues;
-  const result = calculatePoints(values);
+  const result = calculatePoints(values, pointsTable);
 
   function togglePanel(key: keyof typeof openPanels) {
     setOpenPanels((current) => ({ ...current, [key]: !current[key] }));

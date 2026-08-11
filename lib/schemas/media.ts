@@ -22,4 +22,16 @@ export const mediaUploadSchema = z.object({
   bucket: z.enum(MEDIA_BUCKETS),
 });
 
+export const mediaListSchema = z.object({
+  bucket: z.enum(MEDIA_BUCKETS),
+});
+
+export const mediaDeleteSchema = z.object({
+  csrfToken: z.string().min(1),
+  bucket: z.enum(MEDIA_BUCKETS),
+  path: z.string().trim().min(1).max(500),
+});
+
 export type MediaUploadInput = z.infer<typeof mediaUploadSchema>;
+export type MediaListInput = z.infer<typeof mediaListSchema>;
+export type MediaDeleteInput = z.infer<typeof mediaDeleteSchema>;

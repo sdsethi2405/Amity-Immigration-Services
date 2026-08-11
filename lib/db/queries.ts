@@ -13,7 +13,9 @@ import { createPublicSupabaseClient } from "@/lib/supabase/public-server";
 export type SiteSettingKey =
   | "compliance_footer"
   | "contact_details"
-  | "social_links";
+  | "social_links"
+  | "enquiry_notify"
+  | "points_table";
 
 export type ContentBlockType =
   | "heading"

@@ -28,8 +28,14 @@ import {
   setSessionCookie,
   generateSessionToken,
 } from "@/lib/auth/session";
-import { loginSchema, logoutSchema } from "@/lib/schemas/auth";
+import { loginSchema, logoutSchema, changePasswordSchema } from "@/lib/schemas/auth";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
+import { actionFail, actionOk, type ActionResult } from "@/lib/admin/action-result";
+import {
+  requireAdmin,
+  requireCsrf,
+  toActionError,
+} from "@/lib/auth/access";
 
 export type LoginActionResult =
   | { success: true }
@@ -192,4 +198,54 @@ export async function logoutAction(
   await clearCsrfCookie();
 
   redirect("/admin/login");
+}
+
+export async function changePasswordAction(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    const parsed = changePasswordSchema.safeParse(input);
+    if (!parsed.success) {
+      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireCsrf(parsed.data.csrfToken);
+    const admin = await requireAdmin();
+
+    const supabase = createServerSupabaseClient();
+    const { data: row, error: fetchError } = await supabase
+      .from("admins")
+      .select("id, password_hash")
+      .eq("id", admin.id)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    const valid = await verifyPassword(
+      parsed.data.currentPassword,
+      row.password_hash,
+    );
+
+    if (!valid) {
+      return actionFail("Current password is incorrect");
+    }
+
+    const passwordHash = await hashPassword(parsed.data.newPassword);
+    const { error: updateError } = await supabase
+      .from("admins")
+      .update({ password_hash: passwordHash })
+      .eq("id", admin.id);
+
+    if (updateError) throw updateError;
+
+    await supabase
+      .from("sessions")
+      .delete()
+      .eq("admin_id", admin.id)
+      .neq("id", admin.sessionId);
+
+    return actionOk();
+  } catch (error) {
+    return actionFail(toActionError(error));
+  }
 }

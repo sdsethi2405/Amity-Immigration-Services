@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 
 import {
   requireAdmin,
+  requireCanDelete,
   requireCsrf,
   toActionError,
 } from "@/lib/auth/access";
@@ -11,6 +12,8 @@ import { actionFail, actionOk, type ActionResult } from "@/lib/admin/action-resu
 import {
   ALLOWED_MEDIA_MIME_TYPES,
   MAX_MEDIA_BYTES,
+  mediaDeleteSchema,
+  mediaListSchema,
   mediaUploadSchema,
   type MediaBucket,
 } from "@/lib/schemas/media";
@@ -21,6 +24,13 @@ export type MediaUploadResult = {
   path: string;
   publicUrl: string;
   bucket: MediaBucket;
+};
+
+export type MediaObject = {
+  name: string;
+  path: string;
+  publicUrl: string;
+  updatedAt: string | null;
 };
 
 function extensionForMime(mime: string): string {
@@ -36,6 +46,22 @@ function extensionForMime(mime: string): string {
     default:
       return "bin";
   }
+}
+
+function objectNameFromPath(bucket: MediaBucket, path: string): string | null {
+  const normalized = path.replace(/^\/+/, "");
+  const prefix = `${bucket}/`;
+
+  if (normalized.startsWith(prefix)) {
+    const name = normalized.slice(prefix.length);
+    return name.length > 0 && !name.includes("..") ? name : null;
+  }
+
+  if (!normalized.includes("/") && !normalized.includes("..")) {
+    return normalized;
+  }
+
+  return null;
 }
 
 export async function uploadMediaAction(
@@ -97,6 +123,86 @@ export async function uploadMediaAction(
       publicUrl,
       bucket: parsed.data.bucket,
     });
+  } catch (error) {
+    return actionFail(toActionError(error));
+  }
+}
+
+export async function listMediaObjectsAction(
+  bucket: unknown,
+): Promise<ActionResult<MediaObject[]>> {
+  try {
+    const parsed = mediaListSchema.safeParse(
+      typeof bucket === "string" ? { bucket } : bucket,
+    );
+    if (!parsed.success) {
+      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireAdmin();
+
+    const supabase = createServerSupabaseClient();
+    const { data, error } = await supabase.storage
+      .from(parsed.data.bucket)
+      .list("", {
+        limit: 100,
+        sortBy: { column: "updated_at", order: "desc" },
+      });
+
+    if (error) {
+      return actionFail(error.message);
+    }
+
+    const objects: MediaObject[] = (data ?? [])
+      .filter((item) => Boolean(item.name) && !item.name.endsWith("/"))
+      .map((item) => {
+        const path = `${parsed.data.bucket}/${item.name}`;
+        return {
+          name: item.name,
+          path,
+          publicUrl: getStoragePublicUrl(path) ?? "",
+          updatedAt: item.updated_at ?? null,
+        };
+      })
+      .filter((item) => item.publicUrl.length > 0);
+
+    return actionOk(objects);
+  } catch (error) {
+    return actionFail(toActionError(error));
+  }
+}
+
+export async function deleteMediaAction(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    const parsed = mediaDeleteSchema.safeParse(input);
+    if (!parsed.success) {
+      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireCsrf(parsed.data.csrfToken);
+    const admin = await requireAdmin();
+    requireCanDelete(admin);
+
+    const objectName = objectNameFromPath(
+      parsed.data.bucket,
+      parsed.data.path,
+    );
+    if (!objectName) {
+      return actionFail("Invalid media path");
+    }
+
+    const supabase = createServerSupabaseClient();
+    const { error } = await supabase.storage
+      .from(parsed.data.bucket)
+      .remove([objectName]);
+
+    if (error) {
+      return actionFail(error.message);
+    }
+
+    return actionOk();
   } catch (error) {
     return actionFail(toActionError(error));
   }

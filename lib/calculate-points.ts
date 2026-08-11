@@ -7,6 +7,7 @@ import {
   type NominationOption,
   type OverseasEmployment,
   type PartnerOption,
+  type PointsTable,
 } from "@/lib/points-table";
 
 export type PointsCalculatorInput = {
@@ -59,39 +60,37 @@ export type PointsResult = {
  * // + Australian study (5) + specialist (10) + NAATI (5) + Pro Year (5) + regional study (5)
  * // + skilled partner (10) + 491 nomination (15) = 140
  */
-export function calculatePoints(input: PointsCalculatorInput): PointsResult {
+export function calculatePoints(
+  input: PointsCalculatorInput,
+  table: PointsTable = POINTS_TABLE,
+): PointsResult {
   const breakdown: PointsBreakdownItem[] = [];
 
-  const agePoints = POINTS_TABLE.age[input.age];
+  const agePoints = table.age[input.age];
   breakdown.push({ key: "age", label: "Age", points: agePoints });
 
-  const englishPoints = POINTS_TABLE.english[input.english];
+  const englishPoints = table.english[input.english];
   breakdown.push({
     key: "english",
     label: "English language",
     points: englishPoints,
   });
 
-  const overseasRaw =
-    POINTS_TABLE.overseasEmployment[input.overseasEmployment];
-  const australianRaw =
-    POINTS_TABLE.australianEmployment[input.australianEmployment];
+  const overseasRaw = table.overseasEmployment[input.overseasEmployment];
+  const australianRaw = table.australianEmployment[input.australianEmployment];
   const employmentUncapped = overseasRaw + australianRaw;
-  const employmentPoints = Math.min(
-    employmentUncapped,
-    POINTS_TABLE.employmentCap,
-  );
+  const employmentPoints = Math.min(employmentUncapped, table.employmentCap);
   breakdown.push({
     key: "employment",
     label: "Skilled employment (overseas + Australia)",
     points: employmentPoints,
     note:
-      employmentUncapped > POINTS_TABLE.employmentCap
-        ? `Combined ${employmentUncapped} capped at ${POINTS_TABLE.employmentCap}`
+      employmentUncapped > table.employmentCap
+        ? `Combined ${employmentUncapped} capped at ${table.employmentCap}`
         : undefined,
   });
 
-  const educationPoints = POINTS_TABLE.education[input.education];
+  const educationPoints = table.education[input.education];
   breakdown.push({
     key: "education",
     label: "Educational qualification",
@@ -99,7 +98,7 @@ export function calculatePoints(input: PointsCalculatorInput): PointsResult {
   });
 
   const australianStudyPoints = input.australianStudy
-    ? POINTS_TABLE.australianStudy
+    ? table.australianStudy
     : 0;
   breakdown.push({
     key: "australianStudy",
@@ -108,7 +107,7 @@ export function calculatePoints(input: PointsCalculatorInput): PointsResult {
   });
 
   const specialistPoints = input.specialistEducation
-    ? POINTS_TABLE.specialistEducation
+    ? table.specialistEducation
     : 0;
   breakdown.push({
     key: "specialistEducation",
@@ -117,7 +116,7 @@ export function calculatePoints(input: PointsCalculatorInput): PointsResult {
   });
 
   const communityLanguagePoints = input.communityLanguage
-    ? POINTS_TABLE.communityLanguage
+    ? table.communityLanguage
     : 0;
   breakdown.push({
     key: "communityLanguage",
@@ -126,7 +125,7 @@ export function calculatePoints(input: PointsCalculatorInput): PointsResult {
   });
 
   const professionalYearPoints = input.professionalYear
-    ? POINTS_TABLE.professionalYear
+    ? table.professionalYear
     : 0;
   breakdown.push({
     key: "professionalYear",
@@ -134,9 +133,7 @@ export function calculatePoints(input: PointsCalculatorInput): PointsResult {
     points: professionalYearPoints,
   });
 
-  const regionalStudyPoints = input.regionalStudy
-    ? POINTS_TABLE.regionalStudy
-    : 0;
+  const regionalStudyPoints = input.regionalStudy ? table.regionalStudy : 0;
   breakdown.push({
     key: "regionalStudy",
     label: "Study in regional Australia",
@@ -144,9 +141,7 @@ export function calculatePoints(input: PointsCalculatorInput): PointsResult {
   });
 
   // Mutually exclusive partner options — take the highest applicable value.
-  const partnerCandidates = [
-    POINTS_TABLE.partner[input.partner],
-  ];
+  const partnerCandidates = [table.partner[input.partner]];
   const partnerPoints = Math.max(0, ...partnerCandidates);
   breakdown.push({
     key: "partner",
@@ -155,7 +150,7 @@ export function calculatePoints(input: PointsCalculatorInput): PointsResult {
   });
 
   // Mutually exclusive nomination options — 190 (5) and 491 (15) cannot both apply.
-  const nominationPoints = POINTS_TABLE.nomination[input.nomination];
+  const nominationPoints = table.nomination[input.nomination];
   breakdown.push({
     key: "nomination",
     label: "Nomination / sponsorship",
@@ -163,7 +158,7 @@ export function calculatePoints(input: PointsCalculatorInput): PointsResult {
   });
 
   const total = breakdown.reduce((sum, item) => sum + item.points, 0);
-  const eoiMinimum = POINTS_TABLE.eoiMinimum;
+  const eoiMinimum = table.eoiMinimum;
 
   return {
     total,

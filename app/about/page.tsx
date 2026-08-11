@@ -11,12 +11,15 @@ import {
   parseSectionTitle,
 } from "@/lib/content/blocks";
 import { getPageBySlug, getPublishedTeamMembers } from "@/lib/db/queries";
+import { formatPageTitle } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const aboutPage = await getPageBySlug("about");
 
   return {
-    title: aboutPage?.meta_title ?? aboutPage?.title ?? "About",
+    title: formatPageTitle(
+      aboutPage?.meta_title ?? aboutPage?.title ?? "About",
+    ),
     description:
       aboutPage?.meta_description ??
       "Learn about Amity Immigration Services — a registered migration agent based in Bundoora, Melbourne.",

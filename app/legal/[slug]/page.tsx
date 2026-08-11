@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { LegalContentSection } from "@/components/sections/legal-content";
 import { getLegalPages, getPageBySlug } from "@/lib/db/queries";
+import { formatPageTitle } from "@/lib/seo";
 
 type LegalPageProps = {
   params: Promise<{ slug: string }>;
@@ -20,11 +21,11 @@ export async function generateMetadata({
   const page = await getPageBySlug(slug);
 
   if (!page) {
-    return { title: "Page not found" };
+    return { title: formatPageTitle("Page not found") };
   }
 
   return {
-    title: page.meta_title ?? page.title,
+    title: formatPageTitle(page.meta_title ?? page.title),
     description: page.meta_description ?? undefined,
   };
 }

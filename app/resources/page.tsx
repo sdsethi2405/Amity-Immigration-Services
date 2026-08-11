@@ -9,12 +9,15 @@ import {
   parseIntroBlock,
 } from "@/lib/content/blocks";
 import { getPageBySlug } from "@/lib/db/queries";
+import { formatPageTitle } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const resourcesPage = await getPageBySlug("resources");
 
   return {
-    title: resourcesPage?.meta_title ?? resourcesPage?.title ?? "Resources",
+    title: formatPageTitle(
+      resourcesPage?.meta_title ?? resourcesPage?.title ?? "Resources",
+    ),
     description:
       resourcesPage?.meta_description ??
       "Guides and official Department of Home Affairs resources for Australian visa applicants.",

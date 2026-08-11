@@ -18,13 +18,13 @@ import {
   getPageBySlug,
   getPublishedServices,
 } from "@/lib/db/queries";
-import { LOCAL_SEO_KEYWORDS } from "@/lib/seo";
+import { formatPageTitle, LOCAL_SEO_KEYWORDS } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const homePage = await getPageBySlug("home");
 
   return {
-    title: homePage?.meta_title ?? "Home",
+    title: formatPageTitle(homePage?.meta_title ?? "Home"),
     description:
       homePage?.meta_description ??
       "Registered migration agent in Bundoora, Melbourne. The registered agent you meet is the one who runs your case.",

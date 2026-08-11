@@ -19,3 +19,24 @@ export const logoutSchema = z.object({
 });
 
 export type LogoutInput = z.infer<typeof logoutSchema>;
+
+export const changePasswordSchema = z
+  .object({
+    csrfToken: z.string().min(1, "CSRF token is required"),
+    currentPassword: z.string().min(1, "Current password is required").max(256),
+    newPassword: z
+      .string()
+      .min(12, "New password must be at least 12 characters")
+      .max(256, "Password is too long"),
+    confirmPassword: z.string().min(1, "Confirm your new password").max(256),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "New passwords do not match",
+    path: ["confirmPassword"],
+  })
+  .refine((data) => data.currentPassword !== data.newPassword, {
+    message: "New password must differ from the current password",
+    path: ["newPassword"],
+  });
+
+export type ChangePasswordInput = z.infer<typeof changePasswordSchema>;

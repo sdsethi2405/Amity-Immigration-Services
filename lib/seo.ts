@@ -6,10 +6,20 @@ export function getSiteUrl(): string {
 
 /** Local search terms for home and services metadata only. */
 export const LOCAL_SEO_KEYWORDS = [
-  "immigration lawyer Bundoora",
+  "migration agent Bundoora",
   "migration agent Melbourne",
   "Australian visa advice Victoria",
 ] as const;
+
+const BRAND_TITLE_SUFFIX = /\s*\|\s*Amity Immigration Services\s*$/i;
+
+/**
+ * Strip a trailing brand suffix so the root layout template
+ * (`%s | Amity Immigration Services`) does not double the brand.
+ */
+export function formatPageTitle(title: string): string {
+  return title.replace(BRAND_TITLE_SUFFIX, "").trim() || title;
+}
 
 export type BreadcrumbItem = {
   name: string;

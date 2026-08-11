@@ -51,7 +51,7 @@ export const metadata: Metadata = {
 
 const localBusinessJsonLd = {
   "@context": "https://schema.org",
-  "@type": ["LegalService", "LocalBusiness"],
+  "@type": ["ProfessionalService", "LocalBusiness"],
   name: "Amity Immigration Services",
   description:
     "Registered migration agent providing skilled, partner, and business visa assistance.",

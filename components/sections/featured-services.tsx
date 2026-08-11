@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import type { Service } from "@/lib/db/queries";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
+import { getLucideIcon } from "@/lib/lucide-icon";
 import { scaleIn, withReducedMotion } from "@/lib/motion";
 
 type FeaturedServicesSectionProps = {
@@ -51,12 +52,21 @@ export function FeaturedServicesSection({
           viewport={{ once: true, margin: "-100px" }}
           variants={containerVariants}
         >
-          {services.map((service) => (
+          {services.map((service) => {
+            const Icon = service.icon ? getLucideIcon(service.icon) : null;
+
+            return (
             <motion.li key={service.id} variants={itemVariants}>
               <Link
                 href={`/services/${service.slug}`}
                 className="group flex h-full flex-col rounded-lg border border-border bg-card p-6 transition-colors hover:border-ring"
               >
+                {Icon ? (
+                  <Icon
+                    className="mb-3 size-6 text-primary"
+                    aria-hidden
+                  />
+                ) : null}
                 <h3 className="font-heading text-xl font-semibold text-foreground group-hover:text-primary">
                   {service.title}
                 </h3>
@@ -71,7 +81,8 @@ export function FeaturedServicesSection({
                 </span>
               </Link>
             </motion.li>
-          ))}
+            );
+          })}
         </motion.ul>
       </div>
     </section>

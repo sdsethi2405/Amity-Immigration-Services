@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import type { Service } from "@/lib/db/queries";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
+import { getLucideIcon } from "@/lib/lucide-icon";
 import { fadeUp, withReducedMotion } from "@/lib/motion";
 
 type ServicesListSectionProps = {
@@ -49,21 +50,32 @@ export function ServicesListSection({
           viewport={{ once: true, margin: "-100px" }}
           variants={containerVariants}
         >
-          {services.map((service) => (
+          {services.map((service) => {
+            const Icon = service.icon ? getLucideIcon(service.icon) : null;
+
+            return (
             <motion.li key={service.id} variants={itemVariants}>
               <Link
                 href={`/services/${service.slug}`}
                 className="group flex flex-col gap-2 px-5 py-6 transition-colors hover:bg-secondary md:flex-row md:items-center md:justify-between md:px-6"
               >
-                <div>
-                  <h3 className="font-heading text-xl font-semibold text-foreground group-hover:text-primary">
-                    {service.title}
-                  </h3>
-                  {service.summary ? (
-                    <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                      {service.summary}
-                    </p>
+                <div className="flex gap-3">
+                  {Icon ? (
+                    <Icon
+                      className="mt-0.5 size-5 shrink-0 text-primary"
+                      aria-hidden
+                    />
                   ) : null}
+                  <div>
+                    <h3 className="font-heading text-xl font-semibold text-foreground group-hover:text-primary">
+                      {service.title}
+                    </h3>
+                    {service.summary ? (
+                      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+                        {service.summary}
+                      </p>
+                    ) : null}
+                  </div>
                 </div>
                 <span className="inline-flex items-center gap-1 text-sm font-medium text-primary">
                   Learn more
@@ -71,7 +83,8 @@ export function ServicesListSection({
                 </span>
               </Link>
             </motion.li>
-          ))}
+            );
+          })}
         </motion.ul>
       </div>
     </section>

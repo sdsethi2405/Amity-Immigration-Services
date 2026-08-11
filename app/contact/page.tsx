@@ -5,12 +5,15 @@ import { EnquiryFormSection } from "@/components/sections/enquiry-form";
 import { MapAndDetailsSection } from "@/components/sections/map-and-details";
 import { parseIntroBlock } from "@/lib/content/blocks";
 import { getContactDetails, getPageBySlug } from "@/lib/db/queries";
+import { formatPageTitle } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
   const contactPage = await getPageBySlug("contact");
 
   return {
-    title: contactPage?.meta_title ?? contactPage?.title ?? "Contact",
+    title: formatPageTitle(
+      contactPage?.meta_title ?? contactPage?.title ?? "Contact",
+    ),
     description:
       contactPage?.meta_description ??
       "Book a consultation with Amity Immigration Services in Bundoora, Melbourne.",
