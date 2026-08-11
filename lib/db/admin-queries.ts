@@ -294,3 +294,112 @@ export async function adminListActors(): Promise<
   if (error) throw error;
   return data ?? [];
 }
+
+export type Enquiry = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  visa_interest: string | null;
+  message: string;
+  status: "new" | "in_progress" | "closed";
+  source_page: string | null;
+  created_at: string;
+};
+
+export type EnquiryListFilters = {
+  status?: Enquiry["status"];
+  limit?: number;
+};
+
+function mapEnquiry(row: {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  visa_interest: string | null;
+  message: string;
+  status: string;
+  source_page: string | null;
+  created_at: string;
+}): Enquiry {
+  const status =
+    row.status === "in_progress" || row.status === "closed"
+      ? row.status
+      : "new";
+
+  return {
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    phone: row.phone,
+    visa_interest: row.visa_interest,
+    message: row.message,
+    status,
+    source_page: row.source_page,
+    created_at: row.created_at,
+  };
+}
+
+/** Contact / consult form submissions — global, not team-scoped. */
+export async function adminListEnquiries(
+  filters: EnquiryListFilters = {},
+): Promise<Enquiry[]> {
+  const supabase = createServerSupabaseClient();
+  const limit = filters.limit ?? 200;
+
+  let query = supabase
+    .from("enquiries")
+    .select(
+      "id, name, email, phone, visa_interest, message, status, source_page, created_at",
+    )
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (filters.status) {
+    query = query.eq("status", filters.status);
+  }
+
+  const { data, error } = await query;
+  if (error) throw error;
+  return (data ?? []).map((row) => mapEnquiry(row));
+}
+
+export async function adminGetEnquiryById(
+  id: string,
+): Promise<Enquiry | null> {
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("enquiries")
+    .select(
+      "id, name, email, phone, visa_interest, message, status, source_page, created_at",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data ? mapEnquiry(data) : null;
+}
+
+export async function adminCountEnquiriesByStatus(): Promise<
+  Record<Enquiry["status"], number>
+> {
+  const supabase = createServerSupabaseClient();
+  const counts: Record<Enquiry["status"], number> = {
+    new: 0,
+    in_progress: 0,
+    closed: 0,
+  };
+
+  const { data, error } = await supabase.from("enquiries").select("status");
+  if (error) throw error;
+
+  for (const row of data ?? []) {
+    const status = String(row.status);
+    if (status === "new" || status === "in_progress" || status === "closed") {
+      counts[status] += 1;
+    }
+  }
+
+  return counts;
+}

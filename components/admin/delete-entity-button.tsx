@@ -12,6 +12,7 @@ type DeleteEntityButtonProps = {
   csrfToken: string;
   label?: string;
   entityLabel?: string;
+  redirectTo?: string;
   deleteAction: (input: {
     id: string;
     csrfToken: string;
@@ -23,6 +24,7 @@ export function DeleteEntityButton({
   csrfToken,
   label = "Delete",
   entityLabel = "item",
+  redirectTo,
   deleteAction,
 }: DeleteEntityButtonProps) {
   const router = useRouter();
@@ -50,6 +52,10 @@ export function DeleteEntityButton({
             throw new Error(result.error);
           }
           toast.success(`${entityLabel} deleted`);
+          if (redirectTo) {
+            router.push(redirectTo);
+            return;
+          }
           router.refresh();
         }}
       />

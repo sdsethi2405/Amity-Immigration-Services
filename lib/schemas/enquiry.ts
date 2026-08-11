@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const enquiryStatusSchema = z.enum(["new", "in_progress", "closed"]);
+
 export const enquirySchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(120),
   email: z.string().trim().email("Enter a valid email address").max(254),
@@ -9,4 +11,16 @@ export const enquirySchema = z.object({
   source_page: z.string().trim().max(200).optional(),
 });
 
+export const enquiryStatusUpdateSchema = z.object({
+  id: z.string().uuid(),
+  status: enquiryStatusSchema,
+  csrfToken: z.string().min(1),
+});
+
+export const enquiryDeleteSchema = z.object({
+  id: z.string().uuid(),
+  csrfToken: z.string().min(1),
+});
+
 export type EnquiryInput = z.infer<typeof enquirySchema>;
+export type EnquiryStatus = z.infer<typeof enquiryStatusSchema>;

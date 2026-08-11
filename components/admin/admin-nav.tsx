@@ -7,6 +7,7 @@ import {
   ClipboardList,
   FileText,
   ImageIcon,
+  Inbox,
   LayoutDashboard,
   LogOut,
   Newspaper,
@@ -23,6 +24,7 @@ import { Button } from "@/components/ui/button";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
+  { href: "/admin/enquiries", label: "Enquiries", icon: Inbox },
   { href: "/admin/pages", label: "Pages", icon: FileText },
   { href: "/admin/services", label: "Services", icon: Briefcase },
   {

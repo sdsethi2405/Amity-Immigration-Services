@@ -6,6 +6,7 @@ import {
   ClipboardList,
   FileText,
   ImageIcon,
+  Inbox,
   Newspaper,
   Plane,
   Users,
@@ -13,6 +14,7 @@ import {
 
 import { ROLE_LEVEL } from "@/lib/auth/constants";
 import { getCurrentAdmin } from "@/lib/auth/session";
+import { adminCountEnquiriesByStatus } from "@/lib/db/admin-queries";
 
 export const metadata: Metadata = {
   title: "Admin Dashboard",
@@ -69,6 +71,8 @@ export default async function AdminDashboardPage() {
   }
 
   const showAudit = admin.role.level >= ROLE_LEVEL.EDITOR;
+  const enquiryCounts = await adminCountEnquiriesByStatus();
+  const newEnquiries = enquiryCounts.new;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -83,6 +87,30 @@ export default async function AdminDashboardPage() {
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
+        <Link
+          href="/admin/enquiries"
+          className="rounded-xl border border-border bg-background p-4 transition-colors hover:border-primary/40 hover:bg-muted/30 sm:col-span-2"
+        >
+          <div className="flex items-start gap-3">
+            <span className="rounded-lg bg-muted p-2 text-foreground">
+              <Inbox className="size-5" aria-hidden />
+            </span>
+            <div>
+              <h2 className="font-heading text-lg font-semibold">
+                Enquiries
+                {newEnquiries > 0 ? (
+                  <span className="ml-2 text-sm font-medium text-primary">
+                    {newEnquiries} new
+                  </span>
+                ) : null}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Contact form and consultation requests from the website.
+              </p>
+            </div>
+          </div>
+        </Link>
+
         {SECTIONS.map((section) => {
           const Icon = section.icon;
           return (
