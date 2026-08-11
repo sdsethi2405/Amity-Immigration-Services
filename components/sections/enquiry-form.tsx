@@ -144,8 +144,9 @@ export function EnquiryFormSection({
                 type="text"
                 tabIndex={-1}
                 autoComplete="off"
-                aria-hidden
-                className="sr-only"
+                aria-hidden="true"
+                data-testid="enquiry-honeypot"
+                className="hidden"
                 {...register("website")}
               />
 

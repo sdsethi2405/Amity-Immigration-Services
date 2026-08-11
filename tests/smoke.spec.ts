@@ -19,12 +19,8 @@ test.describe("public smoke", () => {
 
   test("honeypot field present and hidden", async ({ page }) => {
     await page.goto("/contact");
-    const honeypot = page.locator('form input[name="website"]');
-    await expect(honeypot.first()).toBeAttached();
-    const count = await honeypot.count();
-    expect(count).toBeGreaterThanOrEqual(1);
-    for (let index = 0; index < count; index += 1) {
-      await expect(honeypot.nth(index)).toBeHidden();
-    }
+    const honeypot = page.getByTestId("enquiry-honeypot");
+    await expect(honeypot).toHaveCount(1);
+    await expect(honeypot).toBeHidden();
   });
 });
