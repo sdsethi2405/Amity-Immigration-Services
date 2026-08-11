@@ -15,7 +15,12 @@ export type SiteSettingKey =
   | "contact_details"
   | "social_links"
   | "enquiry_notify"
-  | "points_table";
+  | "points_table"
+  | "enquiry_templates"
+  | "slack_webhook_url"
+  | "whatsapp_e164"
+  | "fee_estimate_bands"
+  | "google_reviews_embed_url";
 
 export type ContentBlockType =
   | "heading"
@@ -87,6 +92,17 @@ export type Service = {
   updated_by: string | null;
 };
 
+export type DocumentChecklistItem = {
+  id: string;
+  label: string;
+  required: boolean;
+};
+
+export type FeeEstimateBand = {
+  label: string;
+  amountAud: number;
+};
+
 export type VisaSubclass = {
   id: string;
   subclass_number: string;
@@ -99,6 +115,7 @@ export type VisaSubclass = {
   eligibility_summary: string | null;
   body: ContentBlock[];
   processing_context: string | null;
+  document_checklist: DocumentChecklistItem[];
   sort_order: number;
   is_published: boolean;
   team_id: string | null;
@@ -202,6 +219,28 @@ export function mapService(row: Record<string, unknown>): Service {
   };
 }
 
+function asDocumentChecklist(value: unknown): DocumentChecklistItem[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const row = item as Record<string, unknown>;
+      if (typeof row.label !== "string" || row.label.trim().length === 0) {
+        return null;
+      }
+      return {
+        id:
+          typeof row.id === "string" && row.id.length > 0
+            ? row.id
+            : crypto.randomUUID(),
+        label: row.label.trim(),
+        required: row.required !== false,
+      };
+    })
+    .filter((item): item is DocumentChecklistItem => item !== null);
+}
+
 export function mapVisaSubclass(row: Record<string, unknown>): VisaSubclass {
   return {
     id: row.id as string,
@@ -215,6 +254,7 @@ export function mapVisaSubclass(row: Record<string, unknown>): VisaSubclass {
     eligibility_summary: (row.eligibility_summary as string | null) ?? null,
     body: asContentBlocks(row.body),
     processing_context: (row.processing_context as string | null) ?? null,
+    document_checklist: asDocumentChecklist(row.document_checklist),
     sort_order: row.sort_order as number,
     is_published: row.is_published as boolean,
     team_id: (row.team_id as string | null) ?? null,
@@ -351,6 +391,57 @@ export async function getContactDetails(): Promise<ContactDetails | null> {
 export async function getSocialLinks(): Promise<SocialLinks | null> {
   const value = await getSiteSetting("social_links");
   return value && typeof value === "object" ? (value as SocialLinks) : null;
+}
+
+export async function getWhatsappE164(): Promise<string | null> {
+  const value = await getSiteSetting("whatsapp_e164");
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (
+    value &&
+    typeof value === "object" &&
+    "number" in value &&
+    typeof (value as { number: unknown }).number === "string"
+  ) {
+    const number = (value as { number: string }).number.trim();
+    return number.length > 0 ? number : null;
+  }
+  return null;
+}
+
+export async function getFeeEstimateBands(): Promise<FeeEstimateBand[]> {
+  const value = await getSiteSetting("fee_estimate_bands");
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const row = item as Record<string, unknown>;
+      const label = typeof row.label === "string" ? row.label.trim() : "";
+      const amount =
+        typeof row.amountAud === "number"
+          ? row.amountAud
+          : typeof row.amount_aud === "number"
+            ? row.amount_aud
+            : Number.NaN;
+      if (!label || !Number.isFinite(amount) || amount < 0) return null;
+      return { label, amountAud: amount };
+    })
+    .filter((item): item is FeeEstimateBand => item !== null);
+}
+
+export async function getGoogleReviewsEmbedUrl(): Promise<string | null> {
+  const value = await getSiteSetting("google_reviews_embed_url");
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (
+    value &&
+    typeof value === "object" &&
+    "url" in value &&
+    typeof (value as { url: unknown }).url === "string"
+  ) {
+    const url = (value as { url: string }).url.trim();
+    return url.length > 0 ? url : null;
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------

@@ -10,6 +10,7 @@ import {
 } from "@/lib/auth/csrf";
 import {
   INVALID_CREDENTIALS_MESSAGE,
+  MAX_FAILED_LOGINS_BEFORE_LOCK,
   SESSION_MAX_AGE_SECONDS,
 } from "@/lib/auth/constants";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
@@ -56,11 +57,21 @@ async function recordFailedLogin(adminId: string): Promise<void> {
 
   if (fetchError) throw fetchError;
 
+  const nextCount = (admin.failed_login_count ?? 0) + 1;
+  const update: {
+    failed_login_count: number;
+    locked_until?: string;
+  } = {
+    failed_login_count: nextCount,
+  };
+
+  if (nextCount >= MAX_FAILED_LOGINS_BEFORE_LOCK) {
+    update.locked_until = getUsernameLockUntil().toISOString();
+  }
+
   const { error } = await supabase
     .from("admins")
-    .update({
-      failed_login_count: (admin.failed_login_count ?? 0) + 1,
-    })
+    .update(update)
     .eq("id", adminId);
 
   if (error) throw error;

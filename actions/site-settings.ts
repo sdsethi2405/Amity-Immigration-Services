@@ -16,8 +16,13 @@ import {
   updateComplianceFooterSchema,
   updateContactDetailsSchema,
   updateEnquiryNotifySchema,
+  updateEnquiryTemplatesSchema,
+  updateFeeEstimateBandsSchema,
+  updateGoogleReviewsEmbedSchema,
   updatePointsTableSchema,
+  updateSlackWebhookSchema,
   updateSocialLinksSchema,
+  updateWhatsappSchema,
 } from "@/lib/schemas/site-settings";
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 
@@ -25,7 +30,9 @@ function revalidateSettings() {
   revalidatePath("/admin/settings");
   revalidatePath("/");
   revalidatePath("/contact");
+  revalidatePath("/about");
   revalidatePath("/services/points-calculator");
+  revalidatePath("/services/fee-estimate");
 }
 
 async function upsertSiteSetting(
@@ -218,31 +225,16 @@ export async function updatePointsTableAction(
   try {
     const parsed = updatePointsTableSchema.safeParse(input);
     if (!parsed.success) {
-      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+      return actionFail(
+        parsed.error.issues[0]?.message ?? "Enter whole numbers only",
+      );
     }
 
     await requireCsrf(parsed.data.csrfToken);
     const admin = await requireAdmin();
     requireAdminManagement(admin);
 
-    let value: unknown;
-    try {
-      value = JSON.parse(parsed.data.points_table_json);
-    } catch {
-      return actionFail("Points table must be valid JSON");
-    }
-
-    if (
-      typeof value !== "object" ||
-      value === null ||
-      Array.isArray(value) ||
-      !("eoiMinimum" in value) ||
-      !("age" in value)
-    ) {
-      return actionFail(
-        "Points table must be an object including at least age and eoiMinimum",
-      );
-    }
+    const value = parsed.data.points_table;
 
     const before = await getSiteSetting("points_table");
     await upsertSiteSetting("points_table", value, admin.id);
@@ -254,6 +246,189 @@ export async function updatePointsTableAction(
         defaults: true,
       },
       afterState: value as Record<string, unknown>,
+      ip: await getClientIp(),
+      userAgent: await getUserAgent(),
+    });
+
+    revalidateSettings();
+    return actionOk();
+  } catch (error) {
+    return actionFail(toActionError(error));
+  }
+}
+
+export async function updateEnquiryTemplatesAction(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    const parsed = updateEnquiryTemplatesSchema.safeParse(input);
+    if (!parsed.success) {
+      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireCsrf(parsed.data.csrfToken);
+    const admin = await requireAdmin();
+    requireAdminManagement(admin);
+
+    const before = await getSiteSetting("enquiry_templates");
+    const value = parsed.data.templates;
+
+    await upsertSiteSetting("enquiry_templates", value, admin.id);
+    await writeAudit({
+      action: "update",
+      actorAdminId: admin.id,
+      targetTable: "site_settings",
+      beforeState: Array.isArray(before)
+        ? { templates: before }
+        : ((before as Record<string, unknown> | null) ?? null),
+      afterState: { templates: value },
+      ip: await getClientIp(),
+      userAgent: await getUserAgent(),
+    });
+
+    revalidateSettings();
+    return actionOk();
+  } catch (error) {
+    return actionFail(toActionError(error));
+  }
+}
+
+export async function updateSlackWebhookAction(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    const parsed = updateSlackWebhookSchema.safeParse(input);
+    if (!parsed.success) {
+      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireCsrf(parsed.data.csrfToken);
+    const admin = await requireAdmin();
+    requireAdminManagement(admin);
+
+    const before = await getSiteSetting("slack_webhook_url");
+    const value = emptyToNull(parsed.data.slack_webhook_url) ?? "";
+
+    await upsertSiteSetting("slack_webhook_url", value, admin.id);
+    await writeAudit({
+      action: "update",
+      actorAdminId: admin.id,
+      targetTable: "site_settings",
+      beforeState:
+        typeof before === "string"
+          ? { value: before }
+          : ((before as Record<string, unknown> | null) ?? null),
+      afterState: { value },
+      ip: await getClientIp(),
+      userAgent: await getUserAgent(),
+    });
+
+    revalidateSettings();
+    return actionOk();
+  } catch (error) {
+    return actionFail(toActionError(error));
+  }
+}
+
+export async function updateWhatsappAction(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    const parsed = updateWhatsappSchema.safeParse(input);
+    if (!parsed.success) {
+      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireCsrf(parsed.data.csrfToken);
+    const admin = await requireAdmin();
+    requireAdminManagement(admin);
+
+    const before = await getSiteSetting("whatsapp_e164");
+    const value = emptyToNull(parsed.data.whatsapp_e164) ?? "";
+
+    await upsertSiteSetting("whatsapp_e164", value, admin.id);
+    await writeAudit({
+      action: "update",
+      actorAdminId: admin.id,
+      targetTable: "site_settings",
+      beforeState:
+        typeof before === "string"
+          ? { value: before }
+          : ((before as Record<string, unknown> | null) ?? null),
+      afterState: { value },
+      ip: await getClientIp(),
+      userAgent: await getUserAgent(),
+    });
+
+    revalidateSettings();
+    return actionOk();
+  } catch (error) {
+    return actionFail(toActionError(error));
+  }
+}
+
+export async function updateFeeEstimateBandsAction(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    const parsed = updateFeeEstimateBandsSchema.safeParse(input);
+    if (!parsed.success) {
+      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireCsrf(parsed.data.csrfToken);
+    const admin = await requireAdmin();
+    requireAdminManagement(admin);
+
+    const before = await getSiteSetting("fee_estimate_bands");
+    const value = parsed.data.bands;
+
+    await upsertSiteSetting("fee_estimate_bands", value, admin.id);
+    await writeAudit({
+      action: "update",
+      actorAdminId: admin.id,
+      targetTable: "site_settings",
+      beforeState: Array.isArray(before)
+        ? { bands: before }
+        : ((before as Record<string, unknown> | null) ?? null),
+      afterState: { bands: value },
+      ip: await getClientIp(),
+      userAgent: await getUserAgent(),
+    });
+
+    revalidateSettings();
+    return actionOk();
+  } catch (error) {
+    return actionFail(toActionError(error));
+  }
+}
+
+export async function updateGoogleReviewsEmbedAction(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    const parsed = updateGoogleReviewsEmbedSchema.safeParse(input);
+    if (!parsed.success) {
+      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireCsrf(parsed.data.csrfToken);
+    const admin = await requireAdmin();
+    requireAdminManagement(admin);
+
+    const before = await getSiteSetting("google_reviews_embed_url");
+    const value = emptyToNull(parsed.data.google_reviews_embed_url) ?? "";
+
+    await upsertSiteSetting("google_reviews_embed_url", value, admin.id);
+    await writeAudit({
+      action: "update",
+      actorAdminId: admin.id,
+      targetTable: "site_settings",
+      beforeState:
+        typeof before === "string"
+          ? { value: before }
+          : ((before as Record<string, unknown> | null) ?? null),
+      afterState: { value },
       ip: await getClientIp(),
       userAgent: await getUserAgent(),
     });

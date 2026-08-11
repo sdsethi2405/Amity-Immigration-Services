@@ -4,12 +4,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTransition } from "react";
 import {
+  BarChart3,
   ClipboardList,
   FileText,
+  FolderKanban,
   ImageIcon,
   Inbox,
   LayoutDashboard,
   LogOut,
+  Mail,
   Newspaper,
   Plane,
   Settings,
@@ -26,6 +29,8 @@ import { Button } from "@/components/ui/button";
 const NAV_ITEMS = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/admin/enquiries", label: "Enquiries", icon: Inbox },
+  { href: "/admin/matters", label: "Matters", icon: FolderKanban },
+  { href: "/admin/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/admin/pages", label: "Pages", icon: FileText },
   { href: "/admin/services", label: "Services", icon: Briefcase },
   {
@@ -35,6 +40,7 @@ const NAV_ITEMS = [
   },
   { href: "/admin/posts", label: "Posts", icon: Newspaper },
   { href: "/admin/team-members", label: "Team", icon: Users },
+  { href: "/admin/newsletter", label: "Newsletter", icon: Mail },
   { href: "/admin/media", label: "Media", icon: ImageIcon },
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ] as const;

@@ -30,5 +30,10 @@ export const enquiryDeleteSchema = z.object({
   csrfToken: z.string().min(1),
 });
 
+export const enquiryMarkReadSchema = z.object({
+  id: z.string().uuid(),
+  csrfToken: z.string().min(1).optional(),
+});
+
 export type EnquiryInput = z.infer<typeof enquirySchema>;
 export type EnquiryStatus = z.infer<typeof enquiryStatusSchema>;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -21,6 +21,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { GripVertical, Plus, Trash2 } from "lucide-react";
 
+import { RichTextEditor } from "@/components/admin/rich-text-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -199,14 +200,11 @@ function EditableBlockFields({
       );
     case "richtext":
       return (
-        <div className="space-y-2">
-          <Label>HTML</Label>
-          <Textarea
-            rows={5}
-            value={stringField(block, "html") ?? ""}
-            onChange={(event) => onPatch({ html: event.target.value })}
-          />
-        </div>
+        <RichTextEditor
+          label="Content"
+          value={stringField(block, "html") ?? ""}
+          onChange={(html) => onPatch({ html })}
+        />
       );
     case "image":
       return (
@@ -507,97 +505,96 @@ function TemplateBlockFields({
 }) {
   const simpleKeys = SIMPLE_KEYS.filter((key) => key in block);
   const arrayKeys = ARRAY_KEYS.filter((key) => Array.isArray(block[key]));
-  const hasStructuredFields = simpleKeys.length > 0 || arrayKeys.length > 0;
-  const [jsonError, setJsonError] = useState<string | null>(null);
-  const [jsonValue, setJsonValue] = useState(() =>
-    JSON.stringify(block, null, 2),
-  );
+  const extraStringKeys = Object.keys(block).filter((key) => {
+    if (key === "type") return false;
+    if ((SIMPLE_KEYS as readonly string[]).includes(key)) return false;
+    if ((ARRAY_KEYS as readonly string[]).includes(key)) return false;
+    return typeof block[key] === "string" || typeof block[key] === "number";
+  });
+  const hasStructuredFields =
+    simpleKeys.length > 0 || arrayKeys.length > 0 || extraStringKeys.length > 0;
 
-  useEffect(() => {
-    setJsonValue(JSON.stringify(block, null, 2));
-    setJsonError(null);
-  }, [block]);
-
-  if (hasStructuredFields) {
+  if (!hasStructuredFields) {
     return (
-      <div className="grid gap-3">
-        {simpleKeys.map((key) => {
-          const value = block[key];
-          const isLong =
-            typeof value === "string" &&
-            (value.length > 120 ||
-              value.includes("\n") ||
-              key === "html" ||
-              key === "body");
-
-          return (
-            <div key={key} className="space-y-2">
-              <Label className="capitalize">{key}</Label>
-              {isLong ? (
-                <Textarea
-                  rows={4}
-                  value={typeof value === "string" ? value : String(value ?? "")}
-                  onChange={(event) => onPatch({ [key]: event.target.value })}
-                />
-              ) : (
-                <Input
-                  value={typeof value === "string" ? value : String(value ?? "")}
-                  onChange={(event) => onPatch({ [key]: event.target.value })}
-                />
-              )}
-            </div>
-          );
-        })}
-
-        {arrayKeys.map((key) => (
-          <TemplateArrayField
-            key={key}
-            fieldKey={key}
-            value={block[key] as unknown[]}
-            onPatch={onPatch}
-          />
-        ))}
-      </div>
+      <p className="text-sm text-muted-foreground">
+        This block has no editable text fields. Remove it and add a heading,
+        rich text, image, CTA, or callout instead.
+      </p>
     );
   }
 
   return (
-    <div className="space-y-2">
-      <Label>Block JSON</Label>
-      <Textarea
-        rows={8}
-        className="font-mono text-xs"
-        value={jsonValue}
-        onChange={(event) => {
-          const next = event.target.value;
-          setJsonValue(next);
-          try {
-            const parsed = JSON.parse(next) as ContentBlockInput;
-            if (
-              typeof parsed !== "object" ||
-              parsed === null ||
-              Array.isArray(parsed)
-            ) {
-              setJsonError("JSON must be an object");
-              return;
-            }
-            onPatch({
-              ...parsed,
-              type: block.type,
-            });
-            setJsonError(null);
-          } catch {
-            setJsonError("Invalid JSON");
-          }
-        }}
-      />
-      {jsonError ? (
-        <p className="text-sm text-destructive">{jsonError}</p>
-      ) : (
-        <p className="text-xs text-muted-foreground">
-          Type is locked. Other fields can be edited as JSON.
-        </p>
-      )}
+    <div className="grid gap-3">
+      {simpleKeys.map((key) => {
+        const value = block[key];
+        if (key === "html") {
+          return (
+            <RichTextEditor
+              key={key}
+              label="Content"
+              value={typeof value === "string" ? value : ""}
+              onChange={(html) => onPatch({ html })}
+            />
+          );
+        }
+
+        const isLong =
+          typeof value === "string" &&
+          (value.length > 120 || value.includes("\n") || key === "body");
+
+        return (
+          <div key={key} className="space-y-2">
+            <Label className="capitalize">{key}</Label>
+            {isLong ? (
+              <Textarea
+                rows={4}
+                value={typeof value === "string" ? value : String(value ?? "")}
+                onChange={(event) => onPatch({ [key]: event.target.value })}
+              />
+            ) : (
+              <Input
+                value={typeof value === "string" ? value : String(value ?? "")}
+                onChange={(event) => onPatch({ [key]: event.target.value })}
+              />
+            )}
+          </div>
+        );
+      })}
+
+      {extraStringKeys.map((key) => {
+        const value = block[key];
+        return (
+          <div key={key} className="space-y-2">
+            <Label className="capitalize">{key.replace(/_/g, " ")}</Label>
+            <Input
+              value={
+                typeof value === "string" || typeof value === "number"
+                  ? String(value)
+                  : ""
+              }
+              onChange={(event) => {
+                if (typeof value === "number") {
+                  const next = Number(event.target.value);
+                  onPatch({
+                    [key]: Number.isFinite(next) ? next : 0,
+                  });
+                  return;
+                }
+                onPatch({ [key]: event.target.value });
+              }}
+            />
+          </div>
+        );
+      })}
+
+      {arrayKeys.map((key) => (
+        <TemplateArrayField
+          key={key}
+          fieldKey={key}
+          value={block[key] as unknown[]}
+          onPatch={onPatch}
+        />
+      ))}
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Search, X } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 
 import type { SearchResult, SearchResultType } from "@/lib/db/queries";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
@@ -23,15 +23,21 @@ type SiteSearchProps = {
   compact?: boolean;
 };
 
+function resultOptionId(prefix: string, item: SearchResult): string {
+  return `${prefix}-${item.type}-${item.slug}`;
+}
+
 export function SiteSearch({ className, compact = false }: SiteSearchProps) {
   const inputId = useId();
   const panelId = useId();
+  const optionIdPrefix = useId();
   const containerRef = useRef<HTMLDivElement>(null);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -46,6 +52,7 @@ export function SiteSearch({ className, compact = false }: SiteSearchProps) {
     if (!debouncedQuery) {
       setResults([]);
       setLoading(false);
+      setActiveIndex(-1);
       return;
     }
 
@@ -58,10 +65,12 @@ export function SiteSearch({ className, compact = false }: SiteSearchProps) {
       .then(async (response) => {
         if (!response.ok) {
           setResults([]);
+          setActiveIndex(-1);
           return;
         }
         const data = (await response.json()) as { results?: SearchResult[] };
         setResults(data.results ?? []);
+        setActiveIndex(-1);
         setOpen(true);
       })
       .catch((error: unknown) => {
@@ -69,6 +78,7 @@ export function SiteSearch({ className, compact = false }: SiteSearchProps) {
           return;
         }
         setResults([]);
+        setActiveIndex(-1);
       })
       .finally(() => setLoading(false));
 
@@ -79,12 +89,14 @@ export function SiteSearch({ className, compact = false }: SiteSearchProps) {
     function handlePointerDown(event: MouseEvent) {
       if (!containerRef.current?.contains(event.target as Node)) {
         setOpen(false);
+        setActiveIndex(-1);
       }
     }
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         setOpen(false);
+        setActiveIndex(-1);
       }
     }
 
@@ -101,7 +113,59 @@ export function SiteSearch({ className, compact = false }: SiteSearchProps) {
     items: results.filter((item) => item.type === group.type),
   })).filter((group) => group.items.length > 0);
 
+  const flatResults = useMemo(
+    () => grouped.flatMap((group) => group.items),
+    [grouped],
+  );
+
   const showPanel = open && (loading || debouncedQuery.length > 0);
+  const activeDescendant =
+    activeIndex >= 0 && flatResults[activeIndex]
+      ? resultOptionId(optionIdPrefix, flatResults[activeIndex])
+      : undefined;
+
+  function handleInputKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    if (!showPanel || loading || flatResults.length === 0) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        setActiveIndex(-1);
+      }
+      return;
+    }
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setOpen(true);
+      setActiveIndex((current) =>
+        current < flatResults.length - 1 ? current + 1 : 0,
+      );
+      return;
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setOpen(true);
+      setActiveIndex((current) =>
+        current <= 0 ? flatResults.length - 1 : current - 1,
+      );
+      return;
+    }
+
+    if (event.key === "Enter" && activeIndex >= 0) {
+      const selected = flatResults[activeIndex];
+      if (!selected) return;
+      event.preventDefault();
+      setOpen(false);
+      setActiveIndex(-1);
+      window.location.assign(selected.href);
+      return;
+    }
+
+    if (event.key === "Escape") {
+      setOpen(false);
+      setActiveIndex(-1);
+    }
+  }
 
   return (
     <div ref={containerRef} className={cn("relative", className)}>
@@ -116,12 +180,14 @@ export function SiteSearch({ className, compact = false }: SiteSearchProps) {
         <input
           id={inputId}
           type="search"
+          role="combobox"
           value={query}
           placeholder="Search…"
           autoComplete="off"
           aria-controls={panelId}
           aria-expanded={showPanel}
           aria-autocomplete="list"
+          aria-activedescendant={activeDescendant}
           className={cn(
             "w-full rounded-md border border-input bg-background py-2 pr-8 pl-8 text-sm outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50",
             compact ? "h-9" : "h-10 md:w-48 lg:w-56",
@@ -137,6 +203,7 @@ export function SiteSearch({ className, compact = false }: SiteSearchProps) {
               setOpen(true);
             }
           }}
+          onKeyDown={handleInputKeyDown}
         />
         {query ? (
           <button
@@ -148,6 +215,7 @@ export function SiteSearch({ className, compact = false }: SiteSearchProps) {
               setDebouncedQuery("");
               setResults([]);
               setOpen(false);
+              setActiveIndex(-1);
             }}
           >
             <X className="size-4" aria-hidden />
@@ -191,27 +259,46 @@ export function SiteSearch({ className, compact = false }: SiteSearchProps) {
                         {group.label}
                       </p>
                       <ul className="mt-1 space-y-0.5">
-                        {group.items.map((item) => (
-                          <li key={`${item.type}-${item.slug}`}>
-                            <Link
-                              href={item.href}
-                              className="block rounded-md px-2 py-2 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                              onClick={() => setOpen(false)}
-                            >
-                              <span className="block text-sm font-medium text-foreground">
-                                {item.title}
-                              </span>
-                              {item.snippet ? (
-                                <span
-                                  className="mt-0.5 block text-xs text-muted-foreground [&_b]:font-semibold [&_b]:text-foreground"
-                                  dangerouslySetInnerHTML={{
-                                    __html: item.snippet,
-                                  }}
-                                />
-                              ) : null}
-                            </Link>
-                          </li>
-                        ))}
+                        {group.items.map((item) => {
+                          const optionId = resultOptionId(optionIdPrefix, item);
+                          const flatIndex = flatResults.findIndex(
+                            (result) =>
+                              result.type === item.type &&
+                              result.slug === item.slug,
+                          );
+                          const isActive = flatIndex === activeIndex;
+
+                          return (
+                            <li key={`${item.type}-${item.slug}`} role="presentation">
+                              <Link
+                                id={optionId}
+                                role="option"
+                                aria-selected={isActive}
+                                href={item.href}
+                                className={cn(
+                                  "block rounded-md px-2 py-2 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                                  isActive && "bg-muted",
+                                )}
+                                onClick={() => {
+                                  setOpen(false);
+                                  setActiveIndex(-1);
+                                }}
+                              >
+                                <span className="block text-sm font-medium text-foreground">
+                                  {item.title}
+                                </span>
+                                {item.snippet ? (
+                                  <span
+                                    className="mt-0.5 block text-xs text-muted-foreground [&_b]:font-semibold [&_b]:text-foreground"
+                                    dangerouslySetInnerHTML={{
+                                      __html: item.snippet,
+                                    }}
+                                  />
+                                ) : null}
+                              </Link>
+                            </li>
+                          );
+                        })}
                       </ul>
                     </div>
                   ))

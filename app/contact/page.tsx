@@ -20,19 +20,25 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default async function ContactPage() {
-  const [contactPage, contact] = await Promise.all([
+type ContactPageProps = {
+  searchParams: Promise<{ visa_interest?: string }>;
+};
+
+export default async function ContactPage({ searchParams }: ContactPageProps) {
+  const [contactPage, contact, params] = await Promise.all([
     getPageBySlug("contact"),
     getContactDetails(),
+    searchParams,
   ]);
 
   const blocks = contactPage?.blocks ?? [];
   const intro = parseIntroBlock(blocks, "contact-intro");
+  const visaInterest = params.visa_interest?.trim() ?? "";
 
   return (
     <>
       {intro ? <ContactIntroSection content={intro} /> : null}
-      <EnquiryFormSection />
+      <EnquiryFormSection defaultVisaInterest={visaInterest} />
       <MapAndDetailsSection contact={contact} />
     </>
   );

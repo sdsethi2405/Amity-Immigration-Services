@@ -1,4 +1,5 @@
 import type { ContentBlock } from "@/lib/db/queries";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { cn } from "@/lib/utils";
 
 type ContentBlockRendererProps = {
@@ -42,7 +43,7 @@ function renderBlock(block: ContentBlock, index: number) {
         <div
           key={`richtext-${index}`}
           className="prose prose-neutral mt-4 max-w-none text-foreground prose-p:text-muted-foreground prose-a:text-primary"
-          dangerouslySetInnerHTML={{ __html: html }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(html) }}
         />
       );
     }

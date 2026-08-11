@@ -24,6 +24,7 @@ export type NavItem =
       href: string;
       groups: NavStreamGroup[];
       utilityLinks: NavLink[];
+      serviceLinks: NavLink[];
     };
 
 export const staticNavLinks: Array<
@@ -36,6 +37,7 @@ export const staticNavLinks: Array<
   { type: "link", label: "Resources", href: "/resources" },
   { type: "link", label: "Blog", href: "/blog" },
   { type: "link", label: "Contact", href: "/contact" },
+  { type: "link", label: "Admin", href: "/admin/login" },
 ];
 
 const MEGA_UTILITY_LINKS: NavLink[] = [
@@ -54,11 +56,27 @@ const MEGA_UTILITY_LINKS: NavLink[] = [
     href: "/services/points-calculator",
     description: "Indicative GSM points estimate",
   },
+  {
+    label: "Visa pathway quiz",
+    href: "/tools/visa-quiz",
+    description: "General pathway suggestions",
+  },
+  {
+    label: "Fee estimate",
+    href: "/services/fee-estimate",
+    description: "Indicative professional fees",
+  },
 ];
 
 export function buildPrimaryNav(
   visaStreamGroups: VisaStreamNavGroup[],
+  services?: Array<{ title: string; slug: string }>,
 ): NavItem[] {
+  const serviceLinks: NavLink[] = (services ?? []).map((service) => ({
+    label: service.title,
+    href: `/services/${service.slug}`,
+  }));
+
   return staticNavLinks.map((item) => {
     if (item.type === "link") {
       return item;
@@ -79,6 +97,7 @@ export function buildPrimaryNav(
       href: item.href,
       groups,
       utilityLinks: MEGA_UTILITY_LINKS,
+      serviceLinks,
     };
   });
 }

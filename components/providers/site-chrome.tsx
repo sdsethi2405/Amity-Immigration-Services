@@ -8,17 +8,24 @@ type SiteChromeProps = {
   children: React.ReactNode;
   header: React.ReactNode;
   footer: React.ReactNode;
+  whatsapp?: React.ReactNode;
 };
 
 /**
  * Client chrome for public pages. Header/footer are passed in from the Server
  * Component layout so CMS nav data (visa subclasses) stays on the server.
  */
-export function SiteChrome({ children, header, footer }: SiteChromeProps) {
+export function SiteChrome({
+  children,
+  header,
+  footer,
+  whatsapp,
+}: SiteChromeProps) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
+  const isPortal = pathname.startsWith("/portal");
 
-  if (isAdmin) {
+  if (isAdmin || isPortal) {
     return <>{children}</>;
   }
 
@@ -27,6 +34,7 @@ export function SiteChrome({ children, header, footer }: SiteChromeProps) {
       {header}
       <main>{children}</main>
       {footer}
+      {whatsapp}
     </SmoothScrollProvider>
   );
 }

@@ -23,6 +23,7 @@ import { createServerSupabaseClient } from "@/lib/supabase/server";
 function revalidateVisas() {
   revalidatePath("/admin/visa-subclasses");
   revalidatePath("/services/visa-sub-classes");
+  revalidatePath("/services/visa-sub-classes", "layout");
 }
 
 export async function createVisaSubclassAction(

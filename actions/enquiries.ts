@@ -13,9 +13,10 @@ import { checkEnquiryRateLimit } from "@/lib/auth/rate-limit";
 import { getClientIp, getUserAgent } from "@/lib/auth/request";
 import { writeAudit } from "@/lib/db/audit";
 import { adminGetEnquiryById } from "@/lib/db/admin-queries";
-import { notifyEnquiryCreated } from "@/lib/enquiry-notify";
+import { notifyEnquiryCreated, sendEnquiryClientAcknowledgement } from "@/lib/enquiry-notify";
 import {
   enquiryDeleteSchema,
+  enquiryMarkReadSchema,
   enquiryNotesUpdateSchema,
   enquirySchema,
   enquiryStatusUpdateSchema,
@@ -94,6 +95,12 @@ export async function submitEnquiry(
     });
   } catch {
     // Notify is best-effort
+  }
+
+  try {
+    await sendEnquiryClientAcknowledgement({ toEmail: email, name });
+  } catch {
+    // Client ack is best-effort
   }
 
   revalidateEnquiries(data.id);
@@ -223,6 +230,46 @@ export async function deleteEnquiryAction(
     });
 
     revalidateEnquiries();
+    return actionOk();
+  } catch (error) {
+    return actionFail(toActionError(error));
+  }
+}
+
+/** Marks an enquiry as read on first admin open. Idempotent when already set. */
+export async function markEnquiryReadAction(
+  input: unknown,
+): Promise<ActionResult> {
+  try {
+    const parsed = enquiryMarkReadSchema.safeParse(input);
+    if (!parsed.success) {
+      return actionFail(parsed.error.issues[0]?.message ?? "Invalid input");
+    }
+
+    await requireAdmin();
+
+    const existing = await adminGetEnquiryById(parsed.data.id);
+    if (!existing) {
+      return actionFail("Enquiry not found");
+    }
+
+    if (existing.read_at) {
+      return actionOk();
+    }
+
+    const supabase = createServerSupabaseClient();
+    const { error } = await supabase
+      .from("enquiries")
+      .update({
+        read_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", parsed.data.id)
+      .is("read_at", null);
+
+    if (error) throw error;
+
+    revalidateEnquiries(existing.id);
     return actionOk();
   } catch (error) {
     return actionFail(toActionError(error));

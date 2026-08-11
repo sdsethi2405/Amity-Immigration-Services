@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
-import { deleteEnquiryAction } from "@/actions/enquiries";
+import { deleteEnquiryAction, markEnquiryReadAction } from "@/actions/enquiries";
 import { DeleteEntityButton } from "@/components/admin/delete-entity-button";
 import { EnquiryNotesForm } from "@/components/admin/enquiry-notes-form";
 import { EnquiryStatusForm } from "@/components/admin/enquiry-status-form";
@@ -11,11 +11,37 @@ import { getCsrfTokenForForms } from "@/lib/admin/csrf";
 import { ROLE_LEVEL } from "@/lib/auth/constants";
 import { getCurrentAdmin } from "@/lib/auth/session";
 import { adminGetEnquiryById } from "@/lib/db/admin-queries";
+import { getSiteSetting } from "@/lib/db/queries";
 import { cn } from "@/lib/utils";
 
 type PageProps = {
   params: Promise<{ id: string }>;
 };
+
+type EnquiryTemplate = {
+  id: string;
+  name: string;
+  body: string;
+};
+
+function parseEnquiryTemplates(value: unknown): EnquiryTemplate[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const row = item as Record<string, unknown>;
+      if (
+        typeof row.id !== "string" ||
+        typeof row.name !== "string" ||
+        typeof row.body !== "string"
+      ) {
+        return null;
+      }
+      return { id: row.id, name: row.name, body: row.body };
+    })
+    .filter((row): row is EnquiryTemplate => row !== null);
+}
 
 export async function generateMetadata({
   params,
@@ -36,14 +62,20 @@ export default async function AdminEnquiryDetailPage({ params }: PageProps) {
   if (!admin) redirect("/admin/login");
 
   const { id } = await params;
-  const [enquiry, csrfToken] = await Promise.all([
+  const [enquiry, csrfToken, templatesRaw] = await Promise.all([
     adminGetEnquiryById(id),
     getCsrfTokenForForms(),
+    getSiteSetting("enquiry_templates"),
   ]);
 
   if (!enquiry) notFound();
 
+  if (!enquiry.read_at) {
+    await markEnquiryReadAction({ id: enquiry.id });
+  }
+
   const canDelete = admin.role.level >= ROLE_LEVEL.EDITOR;
+  const templates = parseEnquiryTemplates(templatesRaw);
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">
@@ -134,6 +166,7 @@ export default async function AdminEnquiryDetailPage({ params }: PageProps) {
           id={enquiry.id}
           notes={enquiry.notes}
           csrfToken={csrfToken}
+          templates={templates}
         />
       </div>
 

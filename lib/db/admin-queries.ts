@@ -12,6 +12,7 @@ import {
   mapVisaSubclass,
   type Page,
   type Post,
+  type Role,
   type Service,
   type Team,
   type TeamMember,
@@ -305,6 +306,7 @@ export type Enquiry = {
   status: "new" | "in_progress" | "closed";
   source_page: string | null;
   notes: string | null;
+  read_at: string | null;
   created_at: string;
   updated_at: string | null;
 };
@@ -324,6 +326,7 @@ function mapEnquiry(row: {
   status: string;
   source_page: string | null;
   notes?: string | null;
+  read_at?: string | null;
   created_at: string;
   updated_at?: string | null;
 }): Enquiry {
@@ -342,6 +345,7 @@ function mapEnquiry(row: {
     status,
     source_page: row.source_page,
     notes: row.notes ?? null,
+    read_at: row.read_at ?? null,
     created_at: row.created_at,
     updated_at: row.updated_at ?? null,
   };
@@ -357,7 +361,7 @@ export async function adminListEnquiries(
   let query = supabase
     .from("enquiries")
     .select(
-      "id, name, email, phone, visa_interest, message, status, source_page, notes, created_at, updated_at",
+      "id, name, email, phone, visa_interest, message, status, source_page, notes, read_at, created_at, updated_at",
     )
     .order("created_at", { ascending: false })
     .limit(limit);
@@ -378,7 +382,7 @@ export async function adminGetEnquiryById(
   const { data, error } = await supabase
     .from("enquiries")
     .select(
-      "id, name, email, phone, visa_interest, message, status, source_page, notes, created_at, updated_at",
+      "id, name, email, phone, visa_interest, message, status, source_page, notes, read_at, created_at, updated_at",
     )
     .eq("id", id)
     .maybeSingle();
@@ -408,4 +412,179 @@ export async function adminCountEnquiriesByStatus(): Promise<
   }
 
   return counts;
+}
+
+export type AdminAccountRow = {
+  id: string;
+  username: string;
+  is_active: boolean;
+  role_id: string | null;
+  team_id: string | null;
+  role_name: string | null;
+  role_level: number | null;
+  role_scope: "team" | "global" | null;
+  team_name: string | null;
+  created_at: string;
+  last_login_at: string | null;
+};
+
+export async function adminListRoles(): Promise<Role[]> {
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("roles")
+    .select("id, name, level, scope, created_at")
+    .order("level", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []).map((row) => ({
+    id: row.id,
+    name: row.name,
+    level: row.level,
+    scope: row.scope === "global" ? "global" : "team",
+    created_at: row.created_at,
+  }));
+}
+
+export async function adminListAdmins(): Promise<AdminAccountRow[]> {
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("admins")
+    .select(
+      "id, username, is_active, role_id, team_id, created_at, last_login_at, roles ( name, level, scope ), teams ( name )",
+    )
+    .order("username");
+
+  if (error) throw error;
+
+  return (data ?? []).map((row) => {
+    const roleRaw = row.roles;
+    const role = Array.isArray(roleRaw) ? roleRaw[0] : roleRaw;
+    const teamRaw = row.teams;
+    const team = Array.isArray(teamRaw) ? teamRaw[0] : teamRaw;
+
+    return {
+      id: row.id,
+      username: row.username,
+      is_active: row.is_active,
+      role_id: row.role_id,
+      team_id: row.team_id,
+      role_name: role?.name ?? null,
+      role_level: role?.level ?? null,
+      role_scope:
+        role?.scope === "global" || role?.scope === "team" ? role.scope : null,
+      team_name: team?.name ?? null,
+      created_at: row.created_at,
+      last_login_at: row.last_login_at,
+    };
+  });
+}
+
+export async function adminGetAdminById(
+  id: string,
+): Promise<AdminAccountRow | null> {
+  const supabase = createServerSupabaseClient();
+  const { data, error } = await supabase
+    .from("admins")
+    .select(
+      "id, username, is_active, role_id, team_id, created_at, last_login_at, roles ( name, level, scope ), teams ( name )",
+    )
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const roleRaw = data.roles;
+  const role = Array.isArray(roleRaw) ? roleRaw[0] : roleRaw;
+  const teamRaw = data.teams;
+  const team = Array.isArray(teamRaw) ? teamRaw[0] : teamRaw;
+
+  return {
+    id: data.id,
+    username: data.username,
+    is_active: data.is_active,
+    role_id: data.role_id,
+    team_id: data.team_id,
+    role_name: role?.name ?? null,
+    role_level: role?.level ?? null,
+    role_scope:
+      role?.scope === "global" || role?.scope === "team" ? role.scope : null,
+    team_name: team?.name ?? null,
+    created_at: data.created_at,
+    last_login_at: data.last_login_at,
+  };
+}
+
+export type VisaInterestCount = {
+  visa_interest: string;
+  count: number;
+};
+
+export type EnquiryDayCount = {
+  day: string;
+  count: number;
+};
+
+/** Top visa_interest values from enquiries created in the last N days. */
+export async function adminTopVisaInterests(
+  days = 90,
+  limit = 10,
+): Promise<VisaInterestCount[]> {
+  const supabase = createServerSupabaseClient();
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+
+  const { data, error } = await supabase
+    .from("enquiries")
+    .select("visa_interest")
+    .gte("created_at", since.toISOString())
+    .not("visa_interest", "is", null);
+
+  if (error) throw error;
+
+  const counts = new Map<string, number>();
+  for (const row of data ?? []) {
+    const value = row.visa_interest?.trim();
+    if (!value) continue;
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+
+  return [...counts.entries()]
+    .map(([visa_interest, count]) => ({ visa_interest, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, limit);
+}
+
+/** Enquiry volume by calendar day for the last N days (UTC date keys). */
+export async function adminEnquiryVolumeByDay(
+  days = 90,
+): Promise<EnquiryDayCount[]> {
+  const supabase = createServerSupabaseClient();
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  since.setUTCHours(0, 0, 0, 0);
+
+  const { data, error } = await supabase
+    .from("enquiries")
+    .select("created_at")
+    .gte("created_at", since.toISOString())
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+
+  const byDay = new Map<string, number>();
+  for (let i = 0; i < days; i += 1) {
+    const d = new Date(since);
+    d.setUTCDate(since.getUTCDate() + i);
+    byDay.set(d.toISOString().slice(0, 10), 0);
+  }
+
+  for (const row of data ?? []) {
+    const day = row.created_at.slice(0, 10);
+    if (byDay.has(day)) {
+      byDay.set(day, (byDay.get(day) ?? 0) + 1);
+    }
+  }
+
+  return [...byDay.entries()].map(([day, count]) => ({ day, count }));
 }

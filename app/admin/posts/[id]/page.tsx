@@ -49,9 +49,17 @@ export default async function AdminEditPostPage({ params }: PageProps) {
         >
           ← Posts
         </Link>
-        <h1 className="mt-3 font-heading text-3xl font-semibold tracking-tight">
-          Edit post
-        </h1>
+        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+          <h1 className="font-heading text-3xl font-semibold tracking-tight">
+            Edit post
+          </h1>
+          <Link
+            href={`/admin/preview/posts/${post.id}`}
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            Preview
+          </Link>
+        </div>
       </div>
 
       <PostForm

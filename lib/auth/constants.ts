@@ -28,6 +28,9 @@ export const ADMIN_MANAGEMENT_MIN_LEVEL = ROLE_LEVEL.HEAD_ADMIN;
 /** Per-username lockout duration when rate limit is exceeded. */
 export const USERNAME_LOCKOUT_MINUTES = 15;
 
+/** Failed password attempts before setting locked_until on the admin row. */
+export const MAX_FAILED_LOGINS_BEFORE_LOCK = 5;
+
 /** Team-scoped content tables that require scope checks on mutation. */
 export const TEAM_SCOPED_TABLES = [
   "pages",

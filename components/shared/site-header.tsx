@@ -7,7 +7,9 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { footerNav, type NavItem } from "@/content/nav";
 import { SiteSearch } from "@/components/shared/site-search";
+import { LocaleToggle } from "@/components/shared/locale-toggle";
 import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion";
+import type { Locale } from "@/lib/i18n/dictionaries";
 import { menuScaleIn, withReducedMotion } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +18,7 @@ const FOCUSABLE_SELECTOR =
 
 type SiteHeaderProps = {
   primaryNav: NavItem[];
+  locale: Locale;
 };
 
 type MegaNavItem = Extract<NavItem, { type: "mega" }>;
@@ -115,8 +118,30 @@ function MegaMenuPanel({
           </ul>
         </div>
 
-        {item.groups.length > 0 ? (
+        {item.groups.length > 0 || item.serviceLinks.length > 0 ? (
           <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {item.serviceLinks.length > 0 ? (
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Our services
+                </p>
+                <ul className="space-y-1">
+                  {item.serviceLinks.map((link) => (
+                    <li key={link.href}>
+                      <Link
+                        href={link.href}
+                        className="block rounded-md px-2 py-1.5 text-sm text-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        onClick={onClose}
+                      >
+                        <span className="font-medium leading-snug">
+                          {link.label}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
             {item.groups.map((group) => (
               <div key={group.stream}>
                 <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -147,7 +172,7 @@ function MegaMenuPanel({
           </div>
         ) : (
           <p className="mt-6 text-sm text-muted-foreground">
-            Visa sub-class pages will appear here once published.
+            Services and visa sub-class pages will appear here once published.
           </p>
         )}
       </div>
@@ -155,7 +180,7 @@ function MegaMenuPanel({
   );
 }
 
-export function SiteHeader({ primaryNav }: SiteHeaderProps) {
+export function SiteHeader({ primaryNav, locale }: SiteHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMega, setOpenMega] = useState<string | null>(null);
   const [desktopMega, setDesktopMega] = useState<string | null>(null);
@@ -252,6 +277,7 @@ export function SiteHeader({ primaryNav }: SiteHeaderProps) {
         </nav>
 
         <div className="flex items-center gap-3">
+          <LocaleToggle locale={locale} className="hidden sm:inline-flex" />
           <SiteSearch className="hidden md:block" />
 
           <button
@@ -283,6 +309,9 @@ export function SiteHeader({ primaryNav }: SiteHeaderProps) {
           className="border-t border-border bg-background px-4 py-4 md:hidden"
         >
           <SiteSearch className="mb-4" compact />
+          <div className="mb-4">
+            <LocaleToggle locale={locale} />
+          </div>
           <ul className="space-y-2">
             {primaryNav.map((item) =>
               item.type === "link" ? (
@@ -336,6 +365,26 @@ export function SiteHeader({ primaryNav }: SiteHeaderProps) {
                           ))}
                         </ul>
                       </div>
+                      {item.serviceLinks.length > 0 ? (
+                        <div>
+                          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Our services
+                          </p>
+                          <ul className="space-y-1">
+                            {item.serviceLinks.map((link) => (
+                              <li key={link.href}>
+                                <Link
+                                  href={link.href}
+                                  className="block py-1 text-sm"
+                                  onClick={() => setMobileOpen(false)}
+                                >
+                                  {link.label}
+                                </Link>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
                       {item.groups.map((group) => (
                         <div key={group.stream}>
                           <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">

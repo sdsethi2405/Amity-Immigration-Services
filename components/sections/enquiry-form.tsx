@@ -14,7 +14,11 @@ import { usePrefersReducedMotion } from "@/lib/hooks/use-prefers-reduced-motion"
 import { fadeIn, withReducedMotion } from "@/lib/motion";
 import { enquirySchema, type EnquiryInput } from "@/lib/schemas/enquiry";
 
-export function EnquiryFormSection() {
+export function EnquiryFormSection({
+  defaultVisaInterest = "",
+}: {
+  defaultVisaInterest?: string;
+}) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -32,7 +36,7 @@ export function EnquiryFormSection() {
       name: "",
       email: "",
       phone: "",
-      visa_interest: "",
+      visa_interest: defaultVisaInterest,
       message: "",
       source_page: "/contact",
       website: "",

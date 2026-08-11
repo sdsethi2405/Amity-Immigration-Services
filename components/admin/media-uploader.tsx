@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { uploadMediaAction } from "@/actions/media";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { compressImageForUpload } from "@/lib/media/compress-image";
 import type { MediaBucket } from "@/lib/schemas/media";
 
 type MediaUploaderProps = {
@@ -33,10 +34,13 @@ export function MediaUploader({
     setFileName(file.name);
 
     startTransition(async () => {
+      const compressed = await compressImageForUpload(file);
+      setFileName(compressed.name);
+
       const formData = new FormData();
       formData.set("csrfToken", csrfToken);
       formData.set("bucket", bucket);
-      formData.set("file", file);
+      formData.set("file", compressed);
 
       const result = await uploadMediaAction(formData);
 

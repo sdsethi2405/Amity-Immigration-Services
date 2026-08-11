@@ -60,6 +60,7 @@ type FormValues = {
   eligibility_summary: string;
   body: ContentBlockInput[];
   processing_context: string;
+  document_checklist: Array<{ id: string; label: string; required: boolean }>;
   sort_order: number;
   is_published: boolean;
   team_id: string;
@@ -78,6 +79,9 @@ export function VisaSubclassForm({
   const [blocks, setBlocks] = useState<ContentBlockInput[]>(
     (visa?.body as ContentBlockInput[] | undefined) ?? [],
   );
+  const [checklist, setChecklist] = useState<
+    Array<{ id: string; label: string; required: boolean }>
+  >(visa?.document_checklist ?? []);
 
   const schema =
     mode === "create" ? visaSubclassCreateSchema : visaSubclassUpdateSchema;
@@ -103,6 +107,7 @@ export function VisaSubclassForm({
       eligibility_summary: visa?.eligibility_summary ?? "",
       body: (visa?.body as ContentBlockInput[] | undefined) ?? [],
       processing_context: visa?.processing_context ?? "",
+      document_checklist: visa?.document_checklist ?? [],
       sort_order: visa?.sort_order ?? 0,
       is_published: visa?.is_published ?? false,
       team_id: visa?.team_id ?? defaultTeamId,
@@ -116,6 +121,7 @@ export function VisaSubclassForm({
         eligibility_summary: values.eligibility_summary || null,
         processing_context: values.processing_context || null,
         body: blocks,
+        document_checklist: checklist,
         is_published: canPublish ? values.is_published : false,
       };
 
@@ -286,6 +292,93 @@ export function VisaSubclassForm({
           setValue("body", next, { shouldDirty: true });
         }}
       />
+
+      <section className="space-y-4 rounded-xl border border-border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-heading text-lg font-semibold">
+            Document checklist
+          </h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setChecklist((current) => [
+                ...current,
+                {
+                  id: crypto.randomUUID(),
+                  label: "",
+                  required: true,
+                },
+              ])
+            }
+          >
+            Add item
+          </Button>
+        </div>
+        {checklist.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            No checklist items yet. Add labelled rows for the public checklist
+            page and portal seeding.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {checklist.map((item, index) => (
+              <li
+                key={item.id}
+                className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_auto_auto]"
+              >
+                <div className="space-y-2">
+                  <Label htmlFor={`checklist-label-${item.id}`}>Label</Label>
+                  <Input
+                    id={`checklist-label-${item.id}`}
+                    value={item.label}
+                    onChange={(event) =>
+                      setChecklist((current) =>
+                        current.map((row, i) =>
+                          i === index
+                            ? { ...row, label: event.target.value }
+                            : row,
+                        ),
+                      )
+                    }
+                  />
+                </div>
+                <label className="flex items-center gap-2 self-end pb-2 text-sm">
+                  <input
+                    type="checkbox"
+                    className="size-4"
+                    checked={item.required}
+                    onChange={(event) =>
+                      setChecklist((current) =>
+                        current.map((row, i) =>
+                          i === index
+                            ? { ...row, required: event.target.checked }
+                            : row,
+                        ),
+                      )
+                    }
+                  />
+                  Required
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="self-end"
+                  onClick={() =>
+                    setChecklist((current) =>
+                      current.filter((_, i) => i !== index),
+                    )
+                  }
+                >
+                  Remove
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
 
       <div className="flex justify-end border-t border-border pt-4">
         <Button type="submit" disabled={isPending}>

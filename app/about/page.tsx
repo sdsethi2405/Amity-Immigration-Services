@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { CredentialsSection } from "@/components/sections/credentials";
 import { CtaBandSection } from "@/components/sections/cta-band";
 import { FirmStorySection } from "@/components/sections/firm-story";
+import { GoogleReviewsEmbed } from "@/components/sections/google-reviews-embed";
 import { TeamGridSection } from "@/components/sections/team-grid";
 import {
   parseCredentialsBlock,
@@ -10,7 +11,11 @@ import {
   parseIntroBlock,
   parseSectionTitle,
 } from "@/lib/content/blocks";
-import { getPageBySlug, getPublishedTeamMembers } from "@/lib/db/queries";
+import {
+  getGoogleReviewsEmbedUrl,
+  getPageBySlug,
+  getPublishedTeamMembers,
+} from "@/lib/db/queries";
 import { formatPageTitle } from "@/lib/seo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -27,9 +32,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const [aboutPage, members] = await Promise.all([
+  const [aboutPage, members, reviewsUrl] = await Promise.all([
     getPageBySlug("about"),
     getPublishedTeamMembers(),
+    getGoogleReviewsEmbedUrl(),
   ]);
 
   const blocks = aboutPage?.blocks ?? [];
@@ -43,6 +49,7 @@ export default async function AboutPage() {
       {firmStory ? <FirmStorySection content={firmStory} /> : null}
       <TeamGridSection members={members} title={teamTitle} />
       {credentials ? <CredentialsSection content={credentials} /> : null}
+      {reviewsUrl ? <GoogleReviewsEmbed embedUrl={reviewsUrl} /> : null}
       {ctaBand ? <CtaBandSection content={ctaBand} /> : null}
     </>
   );

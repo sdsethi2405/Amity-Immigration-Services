@@ -140,6 +140,17 @@ export default async function VisaSubclassDetailPage({
           <ContentBlockRenderer blocks={subclass.body} className="mt-8" />
         ) : null}
 
+        {subclass.document_checklist.length > 0 ? (
+          <div className="mt-8">
+            <Link
+              href={`/services/visa-sub-classes/${subclass.slug}/checklist`}
+              className={cn(buttonVariants({ variant: "outline" }))}
+            >
+              View document checklist
+            </Link>
+          </div>
+        ) : null}
+
         <aside
           className="mt-10 rounded-lg border border-border bg-secondary px-5 py-4 text-sm leading-relaxed text-muted-foreground"
           role="note"

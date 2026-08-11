@@ -5,6 +5,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteChrome } from "@/components/providers/site-chrome";
 import { SiteFooter } from "@/components/shared/site-footer";
 import { SiteHeaderShell } from "@/components/shared/site-header-shell";
+import { WhatsAppChatButton } from "@/components/shared/whatsapp-chat-button";
 import { getSiteUrl } from "@/lib/seo";
 import "./globals.css";
 
@@ -78,7 +79,11 @@ export default function RootLayout({
   return (
     <html lang="en-AU">
       <body className={`${playfair.variable} ${sourceSans.variable}`}>
-        <SiteChrome header={<SiteHeaderShell />} footer={<SiteFooter />}>
+        <SiteChrome
+          header={<SiteHeaderShell />}
+          footer={<SiteFooter />}
+          whatsapp={<WhatsAppChatButton />}
+        >
           {children}
         </SiteChrome>
         <script

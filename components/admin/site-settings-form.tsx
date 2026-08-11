@@ -7,14 +7,31 @@ import {
   updateComplianceFooterAction,
   updateContactDetailsAction,
   updateEnquiryNotifyAction,
+  updateEnquiryTemplatesAction,
+  updateFeeEstimateBandsAction,
+  updateGoogleReviewsEmbedAction,
   updatePointsTableAction,
+  updateSlackWebhookAction,
   updateSocialLinksAction,
+  updateWhatsappAction,
 } from "@/actions/site-settings";
+import { PointsTableFields } from "@/components/admin/points-table-fields";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import type { ContactDetails, SocialLinks } from "@/lib/db/queries";
+import type { ContactDetails, FeeEstimateBand, SocialLinks } from "@/lib/db/queries";
+import {
+  parsePointsTable,
+  POINTS_TABLE,
+  type PointsTable,
+} from "@/lib/points-table";
+
+export type EnquiryTemplateRow = {
+  id: string;
+  name: string;
+  body: string;
+};
 
 type SiteSettingsFormProps = {
   csrfToken: string;
@@ -22,9 +39,21 @@ type SiteSettingsFormProps = {
   social: SocialLinks | null;
   complianceFooter: string;
   notifyEmail: string;
-  pointsTableJson: string;
+  pointsTable: PointsTable;
   resendConfigured: boolean;
+  enquiryTemplates: EnquiryTemplateRow[];
+  slackWebhookUrl: string;
+  whatsappE164: string;
+  feeEstimateBands: FeeEstimateBand[];
+  googleReviewsEmbedUrl: string;
 };
+
+function newTemplateId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `tpl-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
 
 export function SiteSettingsForm({
   csrfToken,
@@ -32,8 +61,13 @@ export function SiteSettingsForm({
   social,
   complianceFooter,
   notifyEmail,
-  pointsTableJson,
+  pointsTable,
   resendConfigured,
+  enquiryTemplates,
+  slackWebhookUrl,
+  whatsappE164,
+  feeEstimateBands,
+  googleReviewsEmbedUrl,
 }: SiteSettingsFormProps) {
   const [isPending, startTransition] = useTransition();
   const [phone, setPhone] = useState(contact?.phone ?? "");
@@ -45,7 +79,16 @@ export function SiteSettingsForm({
   const [instagram, setInstagram] = useState(social?.instagram ?? "");
   const [footer, setFooter] = useState(complianceFooter);
   const [notify, setNotify] = useState(notifyEmail);
-  const [pointsJson, setPointsJson] = useState(pointsTableJson);
+  const [points, setPoints] = useState<PointsTable>(
+    () => parsePointsTable(pointsTable) ?? { ...POINTS_TABLE },
+  );
+  const [templates, setTemplates] = useState<EnquiryTemplateRow[]>(
+    enquiryTemplates,
+  );
+  const [slackUrl, setSlackUrl] = useState(slackWebhookUrl);
+  const [whatsapp, setWhatsapp] = useState(whatsappE164);
+  const [feeBands, setFeeBands] = useState<FeeEstimateBand[]>(feeEstimateBands);
+  const [reviewsUrl, setReviewsUrl] = useState(googleReviewsEmbedUrl);
 
   function run(
     label: string,
@@ -211,17 +254,143 @@ export function SiteSettingsForm({
       </section>
 
       <section className="space-y-4 rounded-xl border border-border p-4">
-        <h2 className="font-heading text-xl font-semibold">Points table</h2>
+        <h2 className="font-heading text-xl font-semibold">Slack webhook</h2>
         <p className="text-sm text-muted-foreground">
-          JSON used by the public GSM points calculator. Keep the same key
-          structure as the defaults.
+          Optional incoming webhook URL. New enquiries post a plain-text summary when set.
         </p>
-        <Textarea
-          rows={18}
-          className="font-mono text-xs"
-          value={pointsJson}
-          onChange={(e) => setPointsJson(e.target.value)}
-        />
+        <div className="space-y-2">
+          <Label htmlFor="slack-webhook">Webhook URL</Label>
+          <Input
+            id="slack-webhook"
+            type="url"
+            value={slackUrl}
+            onChange={(e) => setSlackUrl(e.target.value)}
+            placeholder="https://hooks.slack.com/services/…"
+          />
+        </div>
+        <Button
+          type="button"
+          disabled={isPending}
+          onClick={() =>
+            run("Slack webhook", () =>
+              updateSlackWebhookAction({
+                csrfToken,
+                slack_webhook_url: slackUrl,
+              }),
+            )
+          }
+        >
+          Save Slack webhook
+        </Button>
+      </section>
+
+      <section className="space-y-4 rounded-xl border border-border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-heading text-xl font-semibold">
+            Enquiry note templates
+          </h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={isPending || templates.length >= 20}
+            onClick={() =>
+              setTemplates((current) => [
+                ...current,
+                { id: newTemplateId(), name: "", body: "" },
+              ])
+            }
+          >
+            Add template
+          </Button>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          Up to 20 named snippets for inserting into enquiry notes.
+        </p>
+        <div className="space-y-4">
+          {templates.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No templates yet.</p>
+          ) : (
+            templates.map((template, index) => (
+              <div
+                key={template.id}
+                className="space-y-3 rounded-lg border border-border p-3"
+              >
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Label htmlFor={`template-name-${template.id}`}>
+                      Template name
+                    </Label>
+                    <Input
+                      id={`template-name-${template.id}`}
+                      value={template.name}
+                      onChange={(e) =>
+                        setTemplates((current) =>
+                          current.map((row, i) =>
+                            i === index
+                              ? { ...row, name: e.target.value }
+                              : row,
+                          ),
+                        )
+                      }
+                    />
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isPending}
+                    onClick={() =>
+                      setTemplates((current) =>
+                        current.filter((_, i) => i !== index),
+                      )
+                    }
+                  >
+                    Remove
+                  </Button>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor={`template-body-${template.id}`}>
+                    Template body
+                  </Label>
+                  <Textarea
+                    id={`template-body-${template.id}`}
+                    rows={3}
+                    value={template.body}
+                    onChange={(e) =>
+                      setTemplates((current) =>
+                        current.map((row, i) =>
+                          i === index
+                            ? { ...row, body: e.target.value }
+                            : row,
+                        ),
+                      )
+                    }
+                  />
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+        <Button
+          type="button"
+          disabled={isPending}
+          onClick={() =>
+            run("Enquiry templates", () =>
+              updateEnquiryTemplatesAction({
+                csrfToken,
+                templates,
+              }),
+            )
+          }
+        >
+          Save enquiry templates
+        </Button>
+      </section>
+
+      <section className="space-y-4 rounded-xl border border-border p-4">
+        <h2 className="font-heading text-xl font-semibold">Points table</h2>
+        <PointsTableFields value={points} onChange={setPoints} />
         <Button
           type="button"
           disabled={isPending}
@@ -229,12 +398,164 @@ export function SiteSettingsForm({
             run("Points table", () =>
               updatePointsTableAction({
                 csrfToken,
-                points_table_json: pointsJson,
+                points_table: points,
               }),
             )
           }
         >
           Save points table
+        </Button>
+      </section>
+
+      <section className="space-y-4 rounded-xl border border-border p-4">
+        <h2 className="font-heading text-xl font-semibold">WhatsApp</h2>
+        <div className="space-y-2">
+          <Label htmlFor="whatsapp_e164">WhatsApp number (E.164)</Label>
+          <Input
+            id="whatsapp_e164"
+            value={whatsapp}
+            onChange={(e) => setWhatsapp(e.target.value)}
+            placeholder="+61400000000"
+          />
+          <p className="text-xs text-muted-foreground">
+            Shown as a floating “Chat on WhatsApp” link when set.
+          </p>
+        </div>
+        <Button
+          type="button"
+          disabled={isPending}
+          onClick={() =>
+            run("WhatsApp number", () =>
+              updateWhatsappAction({
+                csrfToken,
+                whatsapp_e164: whatsapp,
+              }),
+            )
+          }
+        >
+          Save WhatsApp number
+        </Button>
+      </section>
+
+      <section className="space-y-4 rounded-xl border border-border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-heading text-xl font-semibold">
+            Fee estimate bands
+          </h2>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setFeeBands((current) => [
+                ...current,
+                { label: "", amountAud: 0 },
+              ])
+            }
+          >
+            Add band
+          </Button>
+        </div>
+        {feeBands.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No fee bands yet.</p>
+        ) : (
+          feeBands.map((band, index) => (
+            <div
+              key={`fee-${index}`}
+              className="grid gap-3 rounded-lg border border-border p-3 sm:grid-cols-[1fr_8rem_auto]"
+            >
+              <div className="space-y-2">
+                <Label htmlFor={`fee-label-${index}`}>Label</Label>
+                <Input
+                  id={`fee-label-${index}`}
+                  value={band.label}
+                  onChange={(e) =>
+                    setFeeBands((current) =>
+                      current.map((row, i) =>
+                        i === index ? { ...row, label: e.target.value } : row,
+                      ),
+                    )
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor={`fee-amount-${index}`}>Amount (AUD)</Label>
+                <Input
+                  id={`fee-amount-${index}`}
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={band.amountAud}
+                  onChange={(e) =>
+                    setFeeBands((current) =>
+                      current.map((row, i) =>
+                        i === index
+                          ? {
+                              ...row,
+                              amountAud: Number(e.target.value) || 0,
+                            }
+                          : row,
+                      ),
+                    )
+                  }
+                />
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="self-end"
+                onClick={() =>
+                  setFeeBands((current) =>
+                    current.filter((_, i) => i !== index),
+                  )
+                }
+              >
+                Remove
+              </Button>
+            </div>
+          ))
+        )}
+        <Button
+          type="button"
+          disabled={isPending}
+          onClick={() =>
+            run("Fee estimate bands", () =>
+              updateFeeEstimateBandsAction({
+                csrfToken,
+                bands: feeBands,
+              }),
+            )
+          }
+        >
+          Save fee bands
+        </Button>
+      </section>
+
+      <section className="space-y-4 rounded-xl border border-border p-4">
+        <h2 className="font-heading text-xl font-semibold">Google reviews</h2>
+        <div className="space-y-2">
+          <Label htmlFor="google_reviews_embed_url">Embed URL</Label>
+          <Input
+            id="google_reviews_embed_url"
+            value={reviewsUrl}
+            onChange={(e) => setReviewsUrl(e.target.value)}
+            placeholder="https://…"
+          />
+        </div>
+        <Button
+          type="button"
+          disabled={isPending}
+          onClick={() =>
+            run("Google reviews embed", () =>
+              updateGoogleReviewsEmbedAction({
+                csrfToken,
+                google_reviews_embed_url: reviewsUrl,
+              }),
+            )
+          }
+        >
+          Save Google reviews URL
         </Button>
       </section>
     </div>

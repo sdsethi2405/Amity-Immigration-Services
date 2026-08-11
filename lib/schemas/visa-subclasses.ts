@@ -14,6 +14,12 @@ const streamEnum = z.enum([
   "other",
 ]);
 
+export const documentChecklistItemSchema = z.object({
+  id: z.string().trim().min(1).max(64),
+  label: z.string().trim().min(1, "Label is required").max(200),
+  required: z.boolean().default(true),
+});
+
 export const visaSubclassFieldsSchema = z.object({
   subclass_number: z.string().trim().min(1).max(40),
   name: z.string().trim().min(1).max(200),
@@ -30,6 +36,7 @@ export const visaSubclassFieldsSchema = z.object({
   eligibility_summary: z.string().trim().max(2000).optional().nullable(),
   body: z.array(contentBlockSchema).default([]),
   processing_context: z.string().trim().max(2000).optional().nullable(),
+  document_checklist: z.array(documentChecklistItemSchema).max(40).default([]),
   sort_order: z.coerce.number().int().min(0).max(10_000).default(0),
   is_published: z.boolean().default(false),
   team_id: z.string().uuid(),
