@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Source_Sans_3 } from "next/font/google";
-import { Analytics } from "@vercel/analytics/react";
-import { SpeedInsights } from "@vercel/speed-insights/next";
 import { SiteChrome } from "@/components/providers/site-chrome";
 import { SiteFooter } from "@/components/shared/site-footer";
 import { SiteHeaderShell } from "@/components/shared/site-header-shell";
@@ -92,8 +90,6 @@ export default function RootLayout({
             __html: JSON.stringify(localBusinessJsonLd),
           }}
         />
-        <Analytics />
-        <SpeedInsights />
       </body>
     </html>
   );
